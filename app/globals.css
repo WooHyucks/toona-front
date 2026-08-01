@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Modern Editorial — Toona */
+    --background: 225 14% 7%;
+    --foreground: 240 9% 97%;
+    --card: 230 13% 11%;
+    --card-foreground: 240 9% 97%;
+    --popover: 235 12% 15%;
+    --popover-foreground: 240 9% 97%;
+    --primary: 253 99% 60%;
+    --primary-foreground: 240 9% 97%;
+    --secondary: 235 12% 15%;
+    --secondary-foreground: 240 9% 97%;
+    --muted: 235 12% 15%;
+    --muted-foreground: 233 8% 68%;
+    --accent: 146 68% 55%;
+    --accent-foreground: 225 14% 7%;
+    --destructive: 0 100% 65%;
+    --destructive-foreground: 240 9% 97%;
+    --border: 230 11% 19%;
+    --input: 230 11% 19%;
+    --ring: 253 99% 60%;
+    --radius: 0.625rem;
+    --elevated: 235 12% 15%;
+    --success: 146 68% 55%;
+    --naver: 152 100% 42%;
+    --kakao: 48 100% 50%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply antialiased;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    min-height: 100dvh;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .toona-gradient-overlay {
+    background: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.72) 38%,
+      transparent 100%
+    );
+  }
+
+  .toona-selected-overlay {
+    background: rgba(95, 52, 254, 0.55);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
