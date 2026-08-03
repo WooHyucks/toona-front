@@ -14,12 +14,26 @@ export class ToonaApiError extends Error {
   }
 }
 
+/** Production FastAPI (Cloud Run). Used when env is missing in production builds. */
+export const PRODUCTION_TOONA_API_BASE =
+  "https://toona-api-610048355251.asia-northeast3.run.app";
+
 export function getApiBase(): string {
-  return (
-    process.env.NEXT_PUBLIC_TOONA_API_BASE?.replace(/\/$/, "") ??
-    "http://localhost:8000"
+  const fromEnv = process.env.NEXT_PUBLIC_TOONA_API_BASE?.trim().replace(
+    /\/$/,
+    ""
   );
+  if (fromEnv) return fromEnv;
+
+  // NEXT_PUBLIC_* is inlined at build time. If unset on Vercel, never fall
+  // back to localhost in production — that breaks the deployed client.
+  if (process.env.NODE_ENV === "production") {
+    return PRODUCTION_TOONA_API_BASE;
+  }
+
+  return "http://localhost:8000";
 }
+
 
 async function parseJson(res: Response): Promise<unknown> {
   try {
