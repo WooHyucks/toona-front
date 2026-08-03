@@ -14,6 +14,7 @@ import {
 import { ErrorState } from "@/components/common/ErrorState";
 import { setFavoriteWebtoon } from "@/lib/session";
 import { clearRecentTasteSource } from "@/lib/recentTasteSource";
+import { recommendationHref } from "@/lib/recommendations-path";
 import type { TasteAnalysisResponse } from "@/types/api";
 
 export function AnalysisScreen() {
@@ -213,12 +214,12 @@ export function AnalysisScreen() {
               initial={reduceMotion ? false : { opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               onClick={() => {
-                const qs = new URLSearchParams({
-                  webtoonId: webtoonId!,
-                  title: displayTitle,
-                });
-                if (sourceParam) qs.set("source", sourceParam);
-                router.push(`/onboarding/result?${qs.toString()}`);
+                router.push(
+                  recommendationHref(webtoonId!, {
+                    source: sourceParam,
+                    title: displayTitle,
+                  })
+                );
               }}
               className="mt-auto flex min-h-12 w-full items-center justify-center rounded-2xl bg-primary text-[15px] font-semibold text-primary-foreground"
             >

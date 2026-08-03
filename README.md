@@ -36,7 +36,7 @@ http://localhost:3000
 
 | 키 | 설명 |
 |----|------|
-| `NEXT_PUBLIC_TOONA_API_BASE` | FastAPI Base URL (기본 `http://localhost:8000`) |
+| `NEXT_PUBLIC_TOONA_API_BASE` | FastAPI Base URL. 로컬 `http://localhost:8000` · 프로덕션 `https://toona-api-610048355251.asia-northeast3.run.app` |
 | `NEXT_PUBLIC_SITE_URL` | 사이트 absolute origin (OG/canonical). 운영 필수. 예: `https://toona.kr` |
 
 > 기존 `NEXT_PUBLIC_SUPABASE_*`는 신규 데이터 경로에서 사용하지 않습니다.
@@ -50,7 +50,8 @@ http://localhost:3000
 | `/home` | TOONA 추천 가치 + `/images/meta.png` |
 | `/world-cup` | 주말 정주행 미끼 (현재 OG 이미지는 meta.png 공용) |
 | `/webtoon/[id]` | 작품명 동적 title/description, thumbnail OG |
-| `/onboarding/result?webtoonId=` | 작품 기반 OG, canonical은 `/webtoon/{id}`, **noindex** |
+| `/recommendations/[webtoonId]` | 추천 결과 공유용 · source 작품명 title · OG 이미지 `/images/meta.png` |
+| `/onboarding/result?webtoonId=` | → `/recommendations/[webtoonId]` redirect |
 | `/world-cup/result/[resultId]` | **미구현** (라우트 없음) |
 
 운영 배포 전 `NEXT_PUBLIC_SITE_URL`을 설정하세요. 미설정 시 fallback `https://toona.kr`.
@@ -59,11 +60,29 @@ http://localhost:3000
 
 1. **온보딩 선택**: 검색 또는 장르 목록에서 재밌게 본 웹툰 1개 선택 (`recommendationReady=true`)
 2. **취향 분석**: `GET /api/webtoons/{id}/taste-analysis` → `analysis.axes` 레이더 + summary/tags
-3. **추천 결과**: `GET /api/recommendations` → `sections.completed` / `sections.ongoing`
+3. **추천 결과**: `/recommendations/{webtoonId}` — `GET /api/recommendations` → `sections.completed` / `sections.ongoing` (+ 친구 공유)
 4. **홈**: `heroSlides` 슬라이더 + 오늘 인기 + 판타지/액션/무협/로맨스/완결
 5. **공식 플랫폼 이동**: `officialUrl` 오픈 + `POST /api/webtoon-actions` (`CLICKED`)
 
 재방문: `toona_onboarding_completed=true` + favorite id → `/home`
+
+## 추천 결과 공유
+
+공유 URL은 **sourceWebtoonId route param**만으로 복구됩니다. sessionStorage / React state에 의존하지 않습니다. 추천 snapshot을 저장하지 않고 API를 다시 호출합니다.
+
+| | |
+|--|--|
+| 공유 URL | `/recommendations/{sourceWebtoonId}?source=share` |
+| Canonical | `/recommendations/{sourceWebtoonId}` (query 제외) |
+| 내부 이동 | 분석 CTA → `/recommendations/{id}` (+ optional `source`) |
+| Legacy | `/onboarding/result?webtoonId=` · `/recommendations?source=` → redirect |
+| 공유 | Web Share API 우선 → clipboard fallback (`lib/share/recommendation.ts`) |
+| 문구 | `{title}과 비슷한 웹툰 추천` / `{title} 좋아하면 이것도 재밌을 것 같아.` |
+| 공유받은 CTA | 「내가 재밌게 본 웹툰도 골라보기」→ `/onboarding` · 「다른 웹툰 둘러보기」→ `/home#home-browse` |
+| Metadata | title/description은 작품명 · OG 이미지는 항상 `/images/meta.png` |
+| Analytics | `recommendation_share_clicked` · `shared_recommendation_viewed` · `_home_clicked` · `_webtoon_clicked` |
+
+월드컵 결과 공유와는 별개입니다.
 
 ## 웹툰 이상형 월드컵 (`/world-cup`)
 
