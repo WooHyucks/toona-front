@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Noto_Sans_KR } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AmplitudeInit } from "@/components/analytics/AmplitudeInit";
 import {
   DEFAULT_DESCRIPTION,
   DEFAULT_OG_IMAGE_PATH,
@@ -66,6 +67,7 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${notoSansKr.variable} min-h-[100dvh] bg-background font-sans text-foreground`}
       >
+        <AmplitudeInit />
         <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
       </body>
     </html>

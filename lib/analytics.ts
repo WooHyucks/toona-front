@@ -2,40 +2,108 @@ import * as amplitude from "@amplitude/analytics-browser";
 
 type Props = Record<string, string | number | boolean | null | undefined>;
 
-let amplitudeReady = false;
+type QueuedEvent = {
+  event: string;
+  properties?: Props;
+};
+
 const onceKeys = new Set<string>();
+const queue: QueuedEvent[] = [];
+
+let initPromise: Promise<boolean> | null = null;
+let warnedMissingKey = false;
 
 function apiKey(): string {
   return process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY?.trim() ?? "";
 }
 
-function ensureAmplitude(): boolean {
-  if (typeof window === "undefined") return false;
-  const key = apiKey();
-  if (!key) return false;
-  if (amplitudeReady) return true;
-  try {
-    amplitude.init(key, {
-      defaultTracking: false,
-    });
-    amplitudeReady = true;
-    return true;
-  } catch {
-    return false;
+function cleanProps(
+  properties?: Props
+): Record<string, string | number | boolean> | undefined {
+  if (!properties) return undefined;
+  const cleaned: Record<string, string | number | boolean> = {};
+  for (const [k, v] of Object.entries(properties)) {
+    if (v === undefined || v === null) continue;
+    cleaned[k] = v;
   }
+  return Object.keys(cleaned).length > 0 ? cleaned : undefined;
+}
+
+function warnMissingKey() {
+  if (warnedMissingKey || typeof window === "undefined") return;
+  warnedMissingKey = true;
+  // Visible in production console so missing Vercel env is obvious
+  // eslint-disable-next-line no-console
+  console.warn(
+    "[toona:amplitude] NEXT_PUBLIC_AMPLITUDE_API_KEY is missing. Events are no-op until set and redeployed."
+  );
+}
+
+/**
+ * Start Amplitude as early as possible on the client.
+ * Safe to call multiple times — shares one init promise.
+ */
+export function initAmplitude(): Promise<boolean> {
+  if (typeof window === "undefined") return Promise.resolve(false);
+  if (initPromise) return initPromise;
+
+  const key = apiKey();
+  if (!key) {
+    warnMissingKey();
+    initPromise = Promise.resolve(false);
+    return initPromise;
+  }
+
+  initPromise = (async () => {
+    try {
+      await amplitude.init(key, undefined, {
+        autocapture: false,
+        defaultTracking: false,
+        // Surface events quickly in Amplitude Live view
+        flushIntervalMillis: 1000,
+        flushQueueSize: 10,
+      }).promise;
+
+      while (queue.length > 0) {
+        const item = queue.shift();
+        if (!item) break;
+        amplitude.track(item.event, cleanProps(item.properties));
+      }
+      void amplitude.flush();
+      return true;
+    } catch {
+      initPromise = null;
+      return false;
+    }
+  })();
+
+  return initPromise;
 }
 
 function send(event: string, properties?: Props) {
+  if (typeof window === "undefined") return;
   try {
-    if (!ensureAmplitude()) return;
-    const cleaned: Record<string, string | number | boolean> = {};
-    if (properties) {
-      for (const [k, v] of Object.entries(properties)) {
-        if (v === undefined || v === null) continue;
-        cleaned[k] = v;
-      }
+    const key = apiKey();
+    if (!key) {
+      warnMissingKey();
+      return;
     }
-    amplitude.track(event, cleaned);
+
+    if (!initPromise) {
+      queue.push({ event, properties });
+      void initAmplitude();
+      return;
+    }
+
+    void initAmplitude().then((ok) => {
+      if (!ok) return;
+      try {
+        amplitude.track(event, cleanProps(properties));
+        void amplitude.flush();
+      } catch {
+        /* never block UX */
+      }
+    });
   } catch {
     /* never block UX */
   }
@@ -52,10 +120,7 @@ function sendOnce(dedupeKey: string, event: string, properties?: Props) {
  * Legacy shim — CustomEvent + console only.
  * Does NOT forward arbitrary events to Amplitude (only the 5 MVP events below).
  */
-export function track(
-  event: string,
-  properties?: Props
-) {
+export function track(event: string, properties?: Props) {
   if (typeof window === "undefined") return;
   try {
     window.dispatchEvent(
