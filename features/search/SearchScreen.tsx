@@ -208,12 +208,13 @@ export function SearchScreen() {
                   <p className="mt-2 line-clamp-2 min-h-[2.4em] text-[12px] font-semibold leading-tight text-foreground">
                     {item.title}
                   </p>
-                  <div className="mt-1 flex items-center gap-1.5">
+                  <div className="mt-1 flex min-w-0 items-center gap-1.5">
                     <PlatformBadge
                       platform={toUiPlatform(item.platform)}
                       size="xs"
+                      label="desktop"
                     />
-                    <span className="truncate text-[10px] text-muted-foreground">
+                    <span className="min-w-0 flex-1 truncate text-[10px] text-muted-foreground">
                       {episode ??
                         (st ? STATUS_LABELS[st] : item.author) ??
                         ""}

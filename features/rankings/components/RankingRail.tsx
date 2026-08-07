@@ -6,6 +6,10 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { WebtoonRailCard } from "@/features/webtoons/components/WebtoonCards";
 import { useWebtoonSheet } from "@/features/shell/WebtoonSheetContext";
 import type { HomeRail } from "@/features/rankings/model/ranking-utils";
+import {
+  HORIZONTAL_RAIL_EMBLA_OPTIONS,
+  HORIZONTAL_RAIL_TOUCH_CLASS,
+} from "@/lib/embla-rail";
 import { cn } from "@/lib/utils";
 
 type RankingRailProps = {
@@ -20,12 +24,7 @@ export function RankingRail({
   className,
 }: RankingRailProps) {
   const { openWebtoon } = useWebtoonSheet();
-  const [emblaRef, emblaApi] = useEmblaCarousel({
-    align: "start",
-    dragFree: true,
-    containScroll: "trimSnaps",
-    skipSnaps: true,
-  });
+  const [emblaRef, emblaApi] = useEmblaCarousel(HORIZONTAL_RAIL_EMBLA_OPTIONS);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(false);
 
@@ -106,11 +105,16 @@ export function RankingRail({
         </div>
       </div>
 
-      {/* Viewport MUST stay overflow-hidden — overflow-visible lets Embla
-          widen the page and drag the whole layout sideways. */}
+      {/* touch-pan-y: vertical page scroll works when gesture starts on a thumbnail.
+          Embla still handles horizontal drag (official Embla horizontal-rail setup). */}
       <div className="relative -mx-4 md:mx-0">
-        <div className="overflow-hidden" ref={emblaRef}>
-          <div className="flex touch-pan-x gap-3 px-4 md:gap-4 md:px-0">
+        <div className="overflow-hidden overscroll-x-contain" ref={emblaRef}>
+          <div
+            className={cn(
+              "flex gap-3 px-4 md:gap-4 md:px-0",
+              HORIZONTAL_RAIL_TOUCH_CLASS
+            )}
+          >
             {rail.items.map((webtoon) => (
               <div
                 key={`${rail.id}-${webtoon.id}-${webtoon.ranking.rank}`}

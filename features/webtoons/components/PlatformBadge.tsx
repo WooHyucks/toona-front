@@ -64,7 +64,7 @@ export function PlatformBadge({
     return (
       <span
         className={cn(
-          "inline-flex items-center font-bold",
+          "inline-flex shrink-0 items-center whitespace-nowrap font-bold",
           shapeClass,
           textSize,
           className
@@ -73,7 +73,7 @@ export function PlatformBadge({
         aria-label={label}
       >
         <PlatformIcon platform={platform} className={cn("shrink-0", iconSize)} />
-        <span className={labelClass}>{shortLabel}</span>
+        <span className={cn(labelClass, "whitespace-nowrap")}>{shortLabel}</span>
       </span>
     );
   }
@@ -82,7 +82,7 @@ export function PlatformBadge({
     return (
       <span
         className={cn(
-          "inline-flex items-center border border-white/20 bg-[#0F1014]/80 font-bold shadow-sm backdrop-blur-sm",
+          "inline-flex shrink-0 items-center whitespace-nowrap border border-white/20 bg-[#0F1014]/80 font-bold shadow-sm backdrop-blur-sm",
           overlayShapeClass,
           textSize,
           className
@@ -91,7 +91,7 @@ export function PlatformBadge({
         aria-label={label}
       >
         <PlatformIcon platform={platform} className={cn("shrink-0", iconSize)} />
-        <span className={labelClass}>{shortLabel}</span>
+        <span className={cn(labelClass, "whitespace-nowrap")}>{shortLabel}</span>
       </span>
     );
   }
@@ -99,7 +99,7 @@ export function PlatformBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center font-bold",
+        "inline-flex shrink-0 items-center whitespace-nowrap font-bold",
         shapeClass,
         textSize,
         className
@@ -112,7 +112,7 @@ export function PlatformBadge({
       aria-label={label}
     >
       <PlatformIcon platform={platform} className={cn("shrink-0", iconSize)} />
-      <span className={labelClass}>{label}</span>
+      <span className={cn(labelClass, "whitespace-nowrap")}>{label}</span>
     </span>
   );
 }

@@ -64,12 +64,14 @@ function RecCard({
           <h3 className="text-[16px] font-bold leading-snug text-foreground">
             {item.webtoon.title}
           </h3>
-          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <div className="mt-2 flex min-w-0 flex-wrap items-center gap-1.5">
             <PlatformBadge
               platform={toUiPlatform(String(item.webtoon.platform))}
             />
             {episode ? (
-              <span className="text-[11px] text-muted-foreground">{episode}</span>
+              <span className="min-w-0 truncate text-[11px] text-muted-foreground">
+                {episode}
+              </span>
             ) : null}
           </div>
         </div>

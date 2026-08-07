@@ -50,7 +50,7 @@ http://localhost:3000
 | `/home` | TOONA 추천 가치 + `/images/meta.png` |
 | `/world-cup` | 주말 정주행 미끼 (현재 OG 이미지는 meta.png 공용) |
 | `/webtoon/[id]` | 작품명 동적 title/description, thumbnail OG |
-| `/recommendations/[webtoonId]` | 추천 결과 공유용 · source 작품명 title · OG 이미지 `/images/meta.png` |
+| `/recommendations/[webtoonId]` | 추천 결과 공유용 · source 작품명 title · OG 이미지 source 썸네일 (없으면 meta.png) |
 | `/onboarding/result?webtoonId=` | → `/recommendations/[webtoonId]` redirect |
 | `/world-cup/result/[resultId]` | **미구현** (라우트 없음) |
 
@@ -76,10 +76,10 @@ http://localhost:3000
 | Canonical | `/recommendations/{sourceWebtoonId}` (query 제외) |
 | 내부 이동 | 분석 CTA → `/recommendations/{id}` (+ optional `source`) |
 | Legacy | `/onboarding/result?webtoonId=` · `/recommendations?source=` → redirect |
-| 공유 | Web Share API 우선 → clipboard fallback (`lib/share/recommendation.ts`) |
-| 문구 | `{title}과 비슷한 웹툰 추천` / `{title} 좋아하면 이것도 재밌을 것 같아.` |
+| 공유 | Web Share: `title` + `url`만 (`text` 제외 → 카톡 채팅 말풍선 방지) |
+| 미리보기 본문 | OG title/description/썸네일 (링크 카드 안 문구) |
 | 공유받은 CTA | 「내가 재밌게 본 웹툰도 골라보기」→ `/onboarding` · 「다른 웹툰 둘러보기」→ `/home#home-browse` |
-| Metadata | title/description은 작품명 · OG 이미지는 항상 `/images/meta.png` |
+| Metadata | title/description은 작품명 · OG 이미지는 source `thumbnailUrl` (없으면 `/images/meta.png`) |
 | Analytics | `recommendation_share_clicked` · `shared_recommendation_viewed` · `_home_clicked` · `_webtoon_clicked` |
 
 월드컵 결과 공유와는 별개입니다.

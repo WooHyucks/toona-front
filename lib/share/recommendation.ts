@@ -43,17 +43,17 @@ async function copyToClipboard(text: string): Promise<boolean> {
 /**
  * Prefer Web Share API; fall back to clipboard.
  * AbortError (user dismisses sheet) → "cancelled" — no error toast.
+ *
+ * Do NOT pass `text`. KakaoTalk puts `text` into the chat bubble as a typed
+ * message. Preview 본문(title/description/image) comes from Open Graph on the URL.
  */
 export async function shareRecommendationResult(
   input: ShareRecommendationInput
 ): Promise<ShareOutcome> {
   if (typeof window === "undefined") return "failed";
 
-  const title = `${input.sourceTitle}과 비슷한 웹툰 추천`;
-  const text = `${input.sourceTitle} 좋아하면 이것도 재밌을 것 같아.`;
   const data: ShareData = {
-    title,
-    text,
+    title: `${input.sourceTitle}과 비슷한 웹툰 추천`,
     url: input.shareUrl,
   };
 

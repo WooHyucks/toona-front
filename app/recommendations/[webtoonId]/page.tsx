@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${title}과 비슷한 웹툰 추천 | TOONA`,
     description: `${title}을 재미있게 봤다면 좋아할 만한 웹툰을 확인해보세요.`,
     pathname: `/recommendations/${webtoonId}`,
-    image: DEFAULT_OG_IMAGE_PATH,
+    image: detail.thumbnailUrl || DEFAULT_OG_IMAGE_PATH,
     openGraphTitle: `${title} 다음에 볼 웹툰 3개`,
     openGraphDescription: `${title}과 취향이 비슷한 작품을 TOONA가 골라드려요.`,
     robots: { index: true, follow: true },

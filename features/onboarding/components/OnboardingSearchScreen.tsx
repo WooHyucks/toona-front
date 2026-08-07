@@ -128,9 +128,9 @@ function BrowseCard({
       <p className="mt-1.5 line-clamp-2 text-[12px] font-semibold leading-snug text-foreground">
         {item.title}
       </p>
-      <div className="mt-0.5 flex items-center gap-1">
+      <div className="mt-0.5 flex min-w-0 items-center gap-1">
         <PlatformBadge platform={platform} size="xs" label="desktop" />
-        <span className="truncate text-[10px] leading-tight text-muted-foreground">
+        <span className="min-w-0 flex-1 truncate text-[10px] leading-tight text-muted-foreground">
           {episode ?? genre ?? ""}
         </span>
       </div>

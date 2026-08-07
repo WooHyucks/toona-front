@@ -44,7 +44,7 @@ export function WebtoonCarousel({
   return (
     <div className={cn("group relative", className)}>
       <div className="overflow-hidden" ref={emblaRef}>
-        <div className="flex gap-3 pl-4 sm:pl-6">
+        <div className="flex gap-3 pl-4 touch-pan-y sm:pl-6">
           {webtoons.map((webtoon, index) => (
             <div
               key={webtoon.id}
