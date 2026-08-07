@@ -19,7 +19,6 @@ const onceKeys = new Set<string>();
 const queue: QueuedEvent[] = [];
 
 let initPromise: Promise<boolean> | null = null;
-let warnedMissingKey = false;
 
 function cleanProps(
   properties?: Props
@@ -33,17 +32,6 @@ function cleanProps(
   return Object.keys(cleaned).length > 0 ? cleaned : undefined;
 }
 
-function warnMissingKey() {
-  if (warnedMissingKey || typeof window === "undefined") return;
-  warnedMissingKey = true;
-  // eslint-disable-next-line no-console
-  console.warn(
-    "[toona:amplitude] API key empty in this build. " +
-      "Vercel에 NEXT_PUBLIC_AMPLITUDE_API_KEY를 Production에 저장한 뒤 " +
-      "반드시 Redeploy 해야 합니다. (저장만 하고 재배포 안 하면 이 경고가 납니다)"
-  );
-}
-
 /**
  * Start Amplitude as early as possible on the client.
  * Safe to call multiple times — shares one init promise.
@@ -53,7 +41,6 @@ export function initAmplitude(): Promise<boolean> {
   if (initPromise) return initPromise;
 
   if (!AMPLITUDE_API_KEY) {
-    warnMissingKey();
     initPromise = Promise.resolve(false);
     return initPromise;
   }
@@ -86,10 +73,7 @@ export function initAmplitude(): Promise<boolean> {
 function send(event: string, properties?: Props) {
   if (typeof window === "undefined") return;
   try {
-    if (!AMPLITUDE_API_KEY) {
-      warnMissingKey();
-      return;
-    }
+    if (!AMPLITUDE_API_KEY) return;
 
     if (!initPromise) {
       queue.push({ event, properties });
@@ -130,10 +114,6 @@ export function track(event: string, properties?: Props) {
         detail: { event, properties: properties ?? {} },
       })
     );
-    if (process.env.NODE_ENV === "development") {
-      // eslint-disable-next-line no-console
-      console.debug("[toona:analytics]", event, properties ?? {});
-    }
   } catch {
     /* never block UX */
   }
