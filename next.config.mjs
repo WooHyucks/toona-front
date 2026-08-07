@@ -1,5 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Ensure Amplitude key is available to the client bundle at build time.
+  env: {
+    NEXT_PUBLIC_AMPLITUDE_API_KEY:
+      process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY ?? "",
+  },
   images: {
     remotePatterns: [
       {

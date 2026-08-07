@@ -7,15 +7,19 @@ type QueuedEvent = {
   properties?: Props;
 };
 
+/**
+ * Must be a static `process.env.NEXT_PUBLIC_*` reference so Next.js inlines
+ * the value at build time (Vercel Production build).
+ */
+const AMPLITUDE_API_KEY = (
+  process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY || ""
+).trim();
+
 const onceKeys = new Set<string>();
 const queue: QueuedEvent[] = [];
 
 let initPromise: Promise<boolean> | null = null;
 let warnedMissingKey = false;
-
-function apiKey(): string {
-  return process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY?.trim() ?? "";
-}
 
 function cleanProps(
   properties?: Props
@@ -32,10 +36,11 @@ function cleanProps(
 function warnMissingKey() {
   if (warnedMissingKey || typeof window === "undefined") return;
   warnedMissingKey = true;
-  // Visible in production console so missing Vercel env is obvious
   // eslint-disable-next-line no-console
   console.warn(
-    "[toona:amplitude] NEXT_PUBLIC_AMPLITUDE_API_KEY is missing. Events are no-op until set and redeployed."
+    "[toona:amplitude] API key empty in this build. " +
+      "Vercel에 NEXT_PUBLIC_AMPLITUDE_API_KEY를 Production에 저장한 뒤 " +
+      "반드시 Redeploy 해야 합니다. (저장만 하고 재배포 안 하면 이 경고가 납니다)"
   );
 }
 
@@ -47,8 +52,7 @@ export function initAmplitude(): Promise<boolean> {
   if (typeof window === "undefined") return Promise.resolve(false);
   if (initPromise) return initPromise;
 
-  const key = apiKey();
-  if (!key) {
+  if (!AMPLITUDE_API_KEY) {
     warnMissingKey();
     initPromise = Promise.resolve(false);
     return initPromise;
@@ -56,10 +60,9 @@ export function initAmplitude(): Promise<boolean> {
 
   initPromise = (async () => {
     try {
-      await amplitude.init(key, undefined, {
+      await amplitude.init(AMPLITUDE_API_KEY, undefined, {
         autocapture: false,
         defaultTracking: false,
-        // Surface events quickly in Amplitude Live view
         flushIntervalMillis: 1000,
         flushQueueSize: 10,
       }).promise;
@@ -83,8 +86,7 @@ export function initAmplitude(): Promise<boolean> {
 function send(event: string, properties?: Props) {
   if (typeof window === "undefined") return;
   try {
-    const key = apiKey();
-    if (!key) {
+    if (!AMPLITUDE_API_KEY) {
       warnMissingKey();
       return;
     }
