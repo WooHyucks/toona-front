@@ -7,7 +7,7 @@ import { WorldCupMatchView } from "@/features/world-cup/components/WorldCupMatch
 import { WorldCupSkeleton } from "@/features/world-cup/components/WorldCupSkeleton";
 import { WorldCupWinnerView } from "@/features/world-cup/components/WorldCupWinner";
 import { worldCupErrorCopy } from "@/features/world-cup/messages";
-import { track } from "@/lib/analytics";
+import { track, trackWorldcupCompleted, trackWorldcupView } from "@/lib/analytics";
 import { ToonaApiError } from "@/lib/api/client";
 import {
   createWorldCupSession,
@@ -108,6 +108,8 @@ export function WorldCupScreen() {
     setHighlight(null);
     setPhase("playing");
 
+    trackWorldcupView();
+
     track("world_cup_match_viewed", {
       worldCupId: res.worldCupId,
       mode: res.mode,
@@ -132,6 +134,8 @@ export function WorldCupScreen() {
     setMatch(null);
     setHighlight(null);
     setPhase("completed");
+
+    trackWorldcupCompleted(res.winner.id, res.winner.title);
 
     track("world_cup_completed", {
       worldCupId: res.worldCupId,

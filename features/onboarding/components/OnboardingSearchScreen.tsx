@@ -25,6 +25,7 @@ import {
 import { cn } from "@/lib/utils";
 import { getEpisodeLabel } from "@/lib/episode";
 import { prepareTasteAnalysis } from "@/lib/taste-flow";
+import { trackPageView } from "@/lib/analytics";
 import { ToonaLogo } from "@/components/brand/ToonaLogo";
 
 type GenreFilterId = "all" | ToonaGenre;
@@ -194,6 +195,7 @@ export function OnboardingSearchScreen() {
 
   useEffect(() => {
     getSessionId();
+    trackPageView();
   }, []);
 
   useEffect(() => {

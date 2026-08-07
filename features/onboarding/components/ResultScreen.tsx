@@ -13,7 +13,7 @@ import {
   getSessionId,
   setFavoriteWebtoon,
 } from "@/lib/session";
-import { track } from "@/lib/analytics";
+import { track, trackRecommendationViewed } from "@/lib/analytics";
 import { WebtoonCover } from "@/features/webtoons/components/WebtoonCover";
 import { PlatformBadge } from "@/features/webtoons/components/PlatformBadge";
 import { RecommendationShareButton } from "@/features/recommendations/RecommendationShareButton";
@@ -190,6 +190,15 @@ export function ResultScreen({
   useEffect(() => {
     setSessionId(getSessionId());
   }, []);
+
+  useEffect(() => {
+    if (status !== "success" || !data) return;
+    trackRecommendationViewed({
+      sourceWebtoonId: data.source.id || webtoonId,
+      sourceTitle: data.source.title,
+      source: entrySource === "world-cup" ? "worldcup" : "direct",
+    });
+  }, [status, data, webtoonId, entrySource]);
 
   useEffect(() => {
     if (!fromShare || !webtoonId) return;

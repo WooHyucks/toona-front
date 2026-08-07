@@ -5,6 +5,7 @@ import {
   setRecentTasteSource,
   type TasteSourceOrigin,
 } from "@/lib/recentTasteSource";
+import { trackWebtoonSelected } from "@/lib/analytics";
 
 export type TasteAnalysisOptions = {
   /** Query attribution only — does not change analysis/recommendation logic */
@@ -49,13 +50,19 @@ export function prepareTasteAnalysis(
 ): string {
   setFavoriteWebtoon(webtoonId, title);
 
+  const origin = options?.origin ?? inferOrigin(options?.source);
+
   setRecentTasteSource({
     webtoonId,
     title,
     thumbnailUrl: options?.thumbnailUrl ?? null,
     platform: normalizePlatform(options?.platform),
-    source: options?.origin ?? inferOrigin(options?.source),
+    source: origin,
   });
+
+  if (origin !== "WORLD_CUP") {
+    trackWebtoonSelected(webtoonId, title);
+  }
 
   void postWebtoonAction({
     sessionId: getSessionId(),
