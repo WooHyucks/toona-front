@@ -102,6 +102,10 @@ http://localhost:3000
 
 공유 페이지(`/world-cup/result/{resultId}`)는 TODO.
 
+## Amplitude
+
+유입·추천 니즈 확인용 이벤트 5개. 상세: [`AMPLITUDE.md`](./AMPLITUDE.md)
+
 ## localStorage
 
 | Key | 용도 |

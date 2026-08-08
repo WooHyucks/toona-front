@@ -157,3 +157,8 @@ export function trackRecommendationViewed(input: {
     input
   );
 }
+
+/** 6. TOONA home successfully shown */
+export function trackHomeView() {
+  sendOnce("home_view", "home_view");
+}

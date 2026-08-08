@@ -6,6 +6,7 @@ import { HomePageSkeleton } from "@/features/rankings/components/RankingRailSkel
 import { ErrorState } from "@/components/common/ErrorState";
 import { getHomeBundle, type HomeBundle } from "@/lib/api/home";
 import { getFavoriteWebtoonId } from "@/lib/session";
+import { trackHomeView } from "@/lib/analytics";
 
 export function HomeClient() {
   const [bundle, setBundle] = useState<HomeBundle | null>(null);
@@ -29,6 +30,11 @@ export function HomeClient() {
   useEffect(() => {
     void load();
   }, [load, retryKey]);
+
+  useEffect(() => {
+    if (status !== "success") return;
+    trackHomeView();
+  }, [status]);
 
   if (status === "loading") return <HomePageSkeleton />;
   if (status === "error" || !bundle) {
