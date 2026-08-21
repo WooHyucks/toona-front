@@ -2,11 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ExternalLink } from "lucide-react";
+import { ArrowLeft, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import { fetchRecommendations } from "@/lib/api/recommendations";
 import { ToonaApiError } from "@/lib/api/client";
-import { openOfficialAndLog } from "@/lib/api/actions";
+import {
+  getOpenWebtoonCtaLabel,
+  normalizePlatform,
+  openWebtoon,
+} from "@/lib/open-webtoon";
 import { RECOMMENDATION_TYPE_LABEL, toUiPlatform } from "@/lib/api/mappers";
 import {
   completeOnboarding,
@@ -17,7 +21,9 @@ import { track, trackRecommendationViewed } from "@/lib/analytics";
 import { WebtoonCover } from "@/features/webtoons/components/WebtoonCover";
 import { PlatformBadge } from "@/features/webtoons/components/PlatformBadge";
 import { RecommendationShareButton } from "@/features/recommendations/RecommendationShareButton";
+import { CreateLifetimeCollectionCta } from "@/features/lifetime/CreateLifetimeCollectionCta";
 import { getEpisodeLabel } from "@/lib/episode";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import type { RecommendationItem, RecommendationsResponse } from "@/types/api";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { Button } from "@/components/ui/button";
@@ -33,7 +39,11 @@ function RecCard({
   sessionId: string;
   fromShare: boolean;
 }) {
+  const router = useRouter();
+  const isMobile = useIsMobile();
+  const platform = normalizePlatform(String(item.webtoon.platform));
   const hasUrl = Boolean(item.webtoon.officialUrl);
+  const canOpen = platform === "KAKAO" ? Boolean(item.webtoon.id) : hasUrl;
   const episode = getEpisodeLabel({
     status: item.webtoon.status,
     latestEpisodeNumber: item.webtoon.latestEpisodeNumber,
@@ -41,6 +51,12 @@ function RecCard({
   });
   const tags = item.matchedTags.slice(0, 3);
   const reason = item.recommendationReason?.trim();
+  const ctaLabel = canOpen
+    ? getOpenWebtoonCtaLabel(item.webtoon.platform, {
+        isMobile,
+        officialUrl: item.webtoon.officialUrl,
+      })
+    : "링크를 준비 중이에요";
 
   return (
     <article className="rounded-2xl bg-card p-4">
@@ -98,7 +114,7 @@ function RecCard({
 
       <button
         type="button"
-        disabled={!hasUrl}
+        disabled={!canOpen}
         onClick={() => {
           if (fromShare) {
             track("shared_recommendation_webtoon_clicked", {
@@ -106,8 +122,13 @@ function RecCard({
               targetWebtoonId: item.webtoon.id,
             });
           }
-          openOfficialAndLog({
-            officialUrl: item.webtoon.officialUrl,
+          openWebtoon({
+            webtoon: {
+              id: item.webtoon.id,
+              platform: item.webtoon.platform,
+              officialUrl: item.webtoon.officialUrl,
+            },
+            router,
             action: {
               sessionId,
               sourceWebtoonId: sourceId,
@@ -119,8 +140,10 @@ function RecCard({
         }}
         className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl bg-primary text-[13px] font-semibold text-primary-foreground disabled:opacity-40"
       >
-        <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-        {hasUrl ? "공식 플랫폼에서 보기" : "링크를 준비 중이에요"}
+        {platform === "NAVER" ? (
+          <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+        ) : null}
+        {ctaLabel}
       </button>
     </article>
   );
@@ -268,6 +291,14 @@ export function ResultScreen({
     router.push("/onboarding?source=shared-recommendation");
   }
 
+  function goRepickWebtoon() {
+    if (fromShare) {
+      goPickWebtoon();
+      return;
+    }
+    router.push("/onboarding");
+  }
+
   function goBrowseHome() {
     track("shared_recommendation_home_clicked", {
       sourceWebtoonId: webtoonId,
@@ -334,7 +365,17 @@ export function ResultScreen({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
     >
-      <p className="text-[12px] font-medium text-muted-foreground">추천 결과</p>
+      <button
+        type="button"
+        onClick={goRepickWebtoon}
+        className="-ml-2 mb-3 inline-flex min-h-11 items-center gap-1 rounded-xl px-2 text-[13px] font-medium text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" aria-hidden />
+        웹툰 다시 고르기
+      </button>
+      <p className="text-[12px] font-medium text-muted-foreground">
+        {fromShare ? "추천 결과" : "이번 주말 정주행 TOP3"}
+      </p>
       <h1 className="mt-1 text-[22px] font-bold tracking-[-0.02em] text-foreground">
         {fromShare
           ? `${sourceTitle}을 재미있게 봤다면`
@@ -380,12 +421,12 @@ export function ResultScreen({
 
       {status !== "empty" ? (
         <div className="mt-6 space-y-3">
-          <RecommendationShareButton
-            sourceWebtoonId={webtoonId}
-            sourceTitle={sourceTitle}
-          />
           {fromShare ? (
             <>
+              <RecommendationShareButton
+                sourceWebtoonId={webtoonId}
+                sourceTitle={sourceTitle}
+              />
               <Button
                 type="button"
                 className="min-h-12 w-full rounded-2xl text-[15px] font-semibold"
@@ -403,15 +444,18 @@ export function ResultScreen({
               </Button>
             </>
           ) : (
-            <Button
-              type="button"
-              className="min-h-12 w-full rounded-2xl text-[15px] font-semibold"
-              onClick={goHome}
-            >
-              {entrySource === "world-cup"
-                ? "다른 웹툰도 찾아보기"
-                : "TOONA 홈으로 가기"}
-            </Button>
+            <>
+              <CreateLifetimeCollectionCta
+                sourceWebtoonId={data?.source.id || webtoonId}
+                sourceTitle={sourceTitle}
+                onSkipHome={goHome}
+                skipLabel="홈으로 가기"
+              />
+              <RecommendationShareButton
+                sourceWebtoonId={webtoonId}
+                sourceTitle={sourceTitle}
+              />
+            </>
           )}
         </div>
       ) : null}

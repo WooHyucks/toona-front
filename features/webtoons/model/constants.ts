@@ -112,7 +112,8 @@ export function getPlatformExternalLabel(platform: Platform): string {
     case "naver":
       return "네이버웹툰에서 보기";
     case "kakao":
-      return "카카오웹툰에서 보기";
+      /** Kakao opens in-app viewer — avoid “카카오웹툰에서 보기” implying external-only */
+      return "웹툰 바로 보기";
   }
 }
 

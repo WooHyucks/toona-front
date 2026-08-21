@@ -307,3 +307,89 @@ export interface WorldCupShareResult {
   title?: string;
   createdAt?: string;
 }
+
+/* ─── Lifetime webtoons (내 인생 웹툰) ───────────────────────── */
+
+export type LifetimeWebtoonSource = "RECOMMENDATION" | "HOME";
+
+export interface LifetimeWebtoonItem {
+  id: string;
+  title: string;
+  platform: Platform;
+  author: string | null;
+  status: WebtoonStatus | null;
+  thumbnailUrl: string | null;
+  officialUrl: string | null;
+  genres: string[];
+  latestEpisodeNumber: number | null;
+  totalEpisodeCount: number | null;
+  addedAt: string;
+}
+
+export interface LifetimeWebtoonsResponse {
+  items: LifetimeWebtoonItem[];
+  count: number;
+}
+
+export interface AddLifetimeWebtoonRequest {
+  sessionId: string;
+  userId?: string | null;
+  webtoonId: string;
+  source: LifetimeWebtoonSource;
+}
+
+export interface AddLifetimeWebtoonResponse {
+  ok: true;
+  alreadyExists: boolean;
+}
+
+export interface RemoveLifetimeWebtoonResponse {
+  ok: true;
+}
+
+/* ─── Weekend picks (이번 주말 투나 PICK) ───────────────────── */
+
+export interface WeekendPickWebtoon {
+  id: string;
+  title: string;
+  platform: Platform | string;
+  thumbnail?: string | null;
+  thumbnailUrl?: string | null;
+  officialUrl?: string | null;
+  genres?: string[];
+  status?: WebtoonStatus | null;
+  synopsis?: string | null;
+}
+
+export interface WeekendPickReview {
+  id: string;
+  webtoonId: string;
+  videoId?: string | null;
+  videoUrl?: string | null;
+  title?: string | null;
+  channelTitle?: string | null;
+  thumbnailUrl?: string | null;
+  publishedAt?: string | null;
+  durationSeconds?: number | null;
+  viewCount?: number | null;
+  score?: number | null;
+  searchQuery?: string | null;
+  status?: string | null;
+  isPrimary?: boolean;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
+export interface WeekendPickItem {
+  position: number;
+  label: string;
+  reason: string;
+  webtoon: WeekendPickWebtoon;
+  primaryReview?: WeekendPickReview | null;
+}
+
+export interface WeekendPicksResponse {
+  weekKey: string;
+  items?: WeekendPickItem[];
+  picks?: WeekendPickItem[];
+}

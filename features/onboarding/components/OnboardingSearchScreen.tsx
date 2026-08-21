@@ -27,6 +27,7 @@ import { getEpisodeLabel } from "@/lib/episode";
 import { prepareTasteAnalysis } from "@/lib/taste-flow";
 import { trackPageView } from "@/lib/analytics";
 import { ToonaLogo } from "@/components/brand/ToonaLogo";
+import { WeekendPicksSection } from "@/features/weekend-picks/WeekendPicksSection";
 
 type GenreFilterId = "all" | ToonaGenre;
 
@@ -179,6 +180,8 @@ export function OnboardingSearchScreen() {
   const [searchError, setSearchError] = useState("");
 
   const [selected, setSelected] = useState<Selectable | null>(null);
+  const [picksAvailable, setPicksAvailable] = useState(false);
+  const [picksReopenKey, setPicksReopenKey] = useState(0);
 
   const cacheRef = useRef<BrowseCache>({});
   const popularPoolRef = useRef<WebtoonListItem[] | null>(null);
@@ -482,13 +485,25 @@ export function OnboardingSearchScreen() {
         <div className="mb-4">
           <ToonaLogo size="sm" priority />
         </div>
-        <div className="mb-5">
-          <h1 className="text-[20px] font-bold leading-snug tracking-[-0.02em] text-foreground md:text-[22px]">
-            가장 재밌게 본 웹툰 하나를 선택해주세요
+        <div className="mb-4">
+          <p className="text-[12px] font-medium text-primary">
+            이번 주말 뭐 보지?
+          </p>
+          <h1 className="mt-1 text-[20px] font-bold leading-snug tracking-[-0.02em] text-foreground md:text-[22px]">
+            이번 주말 정주행할 웹툰 TOP3
           </h1>
           <p className="mt-1.5 text-[13px] text-muted-foreground md:text-[14px]">
-            검색하거나, 아래 작품에서 골라도 돼요.
+            제일 재밌게 본 웹툰 하나만 골라보세요.
           </p>
+          {picksAvailable ? (
+            <button
+              type="button"
+              onClick={() => setPicksReopenKey((key) => key + 1)}
+              className="mt-3 inline-flex min-h-10 items-center rounded-full bg-card px-3.5 text-[13px] font-semibold text-primary"
+            >
+              이번 주말 투나 PICK 보기
+            </button>
+          ) : null}
         </div>
 
         <form
@@ -749,10 +764,20 @@ export function OnboardingSearchScreen() {
             onClick={confirmSelection}
             className="flex min-h-12 w-full items-center justify-center rounded-2xl bg-primary text-[15px] font-semibold text-primary-foreground transition-opacity disabled:opacity-40"
           >
-            이 작품으로 취향 분석하기
+            이 작품으로 추천받기
           </button>
         </div>
       </div>
+
+      <WeekendPicksSection
+        reopenKey={picksReopenKey}
+        onAvailableChange={setPicksAvailable}
+        onPersonalize={() => {
+          window.setTimeout(() => {
+            document.getElementById("onboarding-search")?.focus();
+          }, 150);
+        }}
+      />
     </div>
   );
 }

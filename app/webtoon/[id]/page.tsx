@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { CalendarDays, ExternalLink } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { AppHeader } from "@/components/common/AppHeader";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { PlatformBadge } from "@/features/webtoons/components/PlatformBadge";
 import { StartSimilarAnalysisButton } from "@/features/webtoons/components/StartSimilarAnalysisButton";
+import { OpenWebtoonButton } from "@/features/webtoons/components/OpenWebtoonButton";
 import { getWebtoonById } from "@/lib/webtoons";
 import {
   DAY_LABEL,
@@ -101,22 +101,11 @@ export default async function WebtoonDetailPage({ params }: Props) {
         </div>
 
         <div className="mt-8 space-y-2">
-          {webtoon.platformUrl ? (
-            <Button asChild className="h-12 w-full">
-              <a
-                href={webtoon.platformUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                공식 플랫폼에서 보기
-                <ExternalLink className="h-4 w-4" />
-              </a>
-            </Button>
-          ) : (
-            <Button disabled className="h-12 w-full">
-              링크를 준비 중이에요
-            </Button>
-          )}
+          <OpenWebtoonButton
+            webtoonId={webtoon.id}
+            platform={webtoon.platform}
+            officialUrl={webtoon.platformUrl}
+          />
           <StartSimilarAnalysisButton
             webtoonId={webtoon.id}
             title={webtoon.title}

@@ -1,17 +1,22 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import useEmblaCarousel from "embla-carousel-react";
 import { ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import type { HomeHeroView } from "@/lib/api/home";
-import { openOfficialAndLog } from "@/lib/api/actions";
 import {
   RECOMMENDATION_TYPE_LABEL,
   toUiPlatform,
 } from "@/lib/api/mappers";
 import { getSessionId } from "@/lib/session";
 import { getEpisodeLabel } from "@/lib/episode";
+import {
+  normalizePlatform,
+  openWebtoon,
+} from "@/lib/open-webtoon";
 import { PlatformBadge } from "@/features/webtoons/components/PlatformBadge";
 import { WebtoonCover } from "@/features/webtoons/components/WebtoonCover";
 import { cn } from "@/lib/utils";
@@ -71,9 +76,15 @@ function HeroSlideContent({
   weekendCopy: boolean;
   priority?: boolean;
 }) {
+  const router = useRouter();
   const reduceMotion = useReducedMotion();
   const webtoon = item.webtoon;
+  const platform = normalizePlatform(String(webtoon.platform));
   const hasUrl = Boolean(webtoon.officialUrl);
+  const canOpen = platform === "KAKAO" ? Boolean(webtoon.id) : hasUrl;
+  const ctaLabel = hasUrl || platform === "KAKAO"
+    ? "지금 보러가기"
+    : "링크를 준비 중이에요";
   const episode = getEpisodeLabel({
     status: webtoon.status,
     latestEpisodeNumber: webtoon.latestEpisodeNumber,
@@ -88,8 +99,13 @@ function HeroSlideContent({
   const reason = item.recommendationReason?.trim();
 
   function onCta() {
-    openOfficialAndLog({
-      officialUrl: webtoon.officialUrl,
+    openWebtoon({
+      webtoon: {
+        id: webtoon.id,
+        platform: webtoon.platform,
+        officialUrl: webtoon.officialUrl,
+      },
+      router,
       action: {
         sessionId: getSessionId(),
         sourceWebtoonId: sourceId,
@@ -174,12 +190,14 @@ function HeroSlideContent({
 
               <button
                 type="button"
-                disabled={!hasUrl}
+                disabled={!canOpen}
                 onClick={onCta}
                 className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-[14px] font-semibold text-primary-foreground shadow-[0_10px_28px_-8px_rgba(95,52,254,0.65)] transition-transform active:scale-[0.98] disabled:opacity-40"
               >
-                <ExternalLink className="h-4 w-4" aria-hidden />
-                지금 보러가기
+                {platform === "NAVER" ? (
+                  <ExternalLink className="h-4 w-4" aria-hidden />
+                ) : null}
+                {ctaLabel}
               </button>
             </motion.div>
           </div>
@@ -234,12 +252,14 @@ function HeroSlideContent({
 
             <button
               type="button"
-              disabled={!hasUrl}
+              disabled={!canOpen}
               onClick={onCta}
               className="mt-7 inline-flex min-h-12 items-center gap-2 rounded-2xl bg-primary px-6 text-[14px] font-semibold text-primary-foreground shadow-[0_12px_32px_-10px_rgba(95,52,254,0.7)] transition-transform hover:brightness-110 active:scale-[0.98] disabled:opacity-40"
             >
-              <ExternalLink className="h-4 w-4" aria-hidden />
-              지금 보러가기
+              {platform === "NAVER" ? (
+                <ExternalLink className="h-4 w-4" aria-hidden />
+              ) : null}
+              {ctaLabel}
             </button>
           </motion.div>
 
@@ -427,7 +447,10 @@ export function HeroSlider({ hero }: { hero: HomeHeroView }) {
 export function FallbackHero() {
   return (
     <div className="pb-1 pt-3 md:pb-3 md:pt-1">
-      <div className="relative overflow-hidden rounded-[22px] bg-card px-6 py-10 ring-1 ring-white/[0.06] md:rounded-[28px] md:px-10 md:py-14">
+      <Link
+        href="/onboarding"
+        className="relative block overflow-hidden rounded-[22px] bg-card px-6 py-10 ring-1 ring-white/[0.06] transition-colors hover:bg-elevated md:rounded-[28px] md:px-10 md:py-14"
+      >
         <div
           className="pointer-events-none absolute inset-0 opacity-80"
           style={{
@@ -444,7 +467,7 @@ export function FallbackHero() {
         <p className="relative mt-2 max-w-md text-[14px] text-muted-foreground">
           아래에서 인기·장르별 작품을 둘러보세요.
         </p>
-      </div>
+      </Link>
     </div>
   );
 }

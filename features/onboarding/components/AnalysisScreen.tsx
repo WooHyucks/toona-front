@@ -223,7 +223,7 @@ export function AnalysisScreen() {
               }}
               className="mt-auto flex min-h-12 w-full items-center justify-center rounded-2xl bg-primary text-[15px] font-semibold text-primary-foreground"
             >
-              내 취향 작품 보기
+              이번 주말 볼 TOP3 보기
             </motion.button>
           ) : null}
         </>

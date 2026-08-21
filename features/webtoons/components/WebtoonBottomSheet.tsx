@@ -13,12 +13,12 @@ import {
   PLATFORM_BADGE_COLORS,
   PLATFORM_LABELS,
   formatDaysOfWeek,
-  getPlatformExternalLabel,
   type Webtoon,
 } from "@/features/webtoons/model";
 import { getGenreLabels, getStatusLabel } from "@/features/webtoons/lib/sections";
 import { getEpisodeLabel } from "@/lib/episode";
-import { openOfficialAndLog } from "@/lib/api/actions";
+import { getOpenWebtoonCtaLabel, openWebtoon } from "@/lib/open-webtoon";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import { getSessionId } from "@/lib/session";
 import { prepareTasteAnalysis } from "@/lib/taste-flow";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ type WebtoonBottomSheetProps = {
 
 export function WebtoonBottomSheet({ webtoon, onClose }: WebtoonBottomSheetProps) {
   const router = useRouter();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!webtoon) return;
@@ -224,14 +225,19 @@ export function WebtoonBottomSheet({ webtoon, onClose }: WebtoonBottomSheetProps
               <Sparkles className="h-4 w-4" aria-hidden />
               이 작품과 비슷한 웹툰 찾기
             </Button>
-            {webtoon.platformUrl ? (
+            {webtoon.platformUrl || webtoon.platform === "kakao" ? (
               <Button
                 type="button"
                 variant="secondary"
                 className="h-12 w-full rounded-2xl text-[14px] font-semibold sm:h-[52px]"
                 onClick={() =>
-                  openOfficialAndLog({
-                    officialUrl: webtoon.platformUrl,
+                  openWebtoon({
+                    webtoon: {
+                      id: webtoon.id,
+                      platform: webtoon.platform,
+                      platformUrl: webtoon.platformUrl,
+                    },
+                    router,
                     action: {
                       sessionId: getSessionId(),
                       targetWebtoonId: webtoon.id,
@@ -240,8 +246,13 @@ export function WebtoonBottomSheet({ webtoon, onClose }: WebtoonBottomSheetProps
                   })
                 }
               >
-                <ExternalLink className="h-4 w-4" aria-hidden />
-                {getPlatformExternalLabel(webtoon.platform)}
+                {webtoon.platform === "naver" ? (
+                  <ExternalLink className="h-4 w-4" aria-hidden />
+                ) : null}
+                {getOpenWebtoonCtaLabel(webtoon.platform, {
+                  isMobile,
+                  officialUrl: webtoon.platformUrl,
+                })}
               </Button>
             ) : (
               <Button

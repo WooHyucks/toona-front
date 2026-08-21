@@ -10,7 +10,10 @@ export async function postWebtoonAction(
   });
 }
 
-/** Open official URL first, then fire-and-forget action log. */
+/**
+ * @deprecated Prefer `openWebtoon` from `@/lib/open-webtoon` (platform-aware).
+ * External-only helper kept for rare call sites without a router.
+ */
 export function openOfficialAndLog(opts: {
   officialUrl: string | null | undefined;
   action: WebtoonActionRequest;

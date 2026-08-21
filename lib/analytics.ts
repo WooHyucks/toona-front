@@ -162,3 +162,112 @@ export function trackRecommendationViewed(input: {
 export function trackHomeView() {
   sendOnce("home_view", "home_view");
 }
+
+/** First lifetime collection created from recommendation source */
+export function trackLifetimeCollectionCreated(
+  sourceWebtoonId: string,
+  sourceTitle: string
+) {
+  send("lifetime_collection_created", { sourceWebtoonId, sourceTitle });
+}
+
+/** Additional lifetime webtoon added from home */
+export function trackLifetimeWebtoonAdded(webtoonId: string, title: string) {
+  send("lifetime_webtoon_added", { webtoonId, title });
+}
+
+/** Official-platform open (CLICKED API is separate and unchanged) */
+export function trackWebtoonClicked(properties: {
+  platform: "naver";
+  openTarget: "app_bridge" | "web_fallback";
+  webtoonId: string;
+  naverTitleId?: string | null;
+}) {
+  const props = {
+    platform: properties.platform,
+    openTarget: properties.openTarget,
+    webtoonId: properties.webtoonId,
+    naverTitleId: properties.naverTitleId ?? undefined,
+  };
+  track("webtoon_clicked", props);
+  send("webtoon_clicked", props);
+}
+
+export type WeekendVideoType = "shorts" | "review";
+export type WeekendOpenTarget = "app_bridge" | "web";
+
+type WeekendPickBase = {
+  webtoonId: string;
+  title: string;
+  position: number;
+  label: string;
+  weekKey: string;
+};
+
+/** Weekend Picks section shown with at least one item */
+export function trackWeekendPicksView(weekKey: string, pickCount: number) {
+  sendOnce(`weekend_picks_view:${weekKey}`, "weekend_picks_view", {
+    weekKey,
+    pickCount,
+  });
+}
+
+/** A pick card entered the viewport */
+export function trackWeekendPickImpression(props: WeekendPickBase) {
+  sendOnce(
+    `weekend_pick_impression:${props.weekKey}:${props.webtoonId}`,
+    "weekend_pick_impression",
+    props
+  );
+}
+
+export function trackWeekendReviewOpen(
+  props: WeekendPickBase & {
+    videoId: string;
+    videoType: WeekendVideoType;
+  }
+) {
+  send("weekend_review_open", props);
+}
+
+export function trackWeekendReviewPlay(
+  props: WeekendPickBase & {
+    videoId: string;
+    videoType: WeekendVideoType;
+  }
+) {
+  send("weekend_review_play", props);
+}
+
+export function trackWeekendReviewClose(
+  props: WeekendPickBase & {
+    videoId?: string;
+    videoType?: WeekendVideoType;
+  }
+) {
+  send("weekend_review_close", props);
+}
+
+export function trackWeekendDirectReadClick(
+  props: WeekendPickBase & {
+    platform: string;
+    openTarget: WeekendOpenTarget;
+  }
+) {
+  send("weekend_direct_read_click", props);
+}
+
+export function trackWeekendReviewReadClick(
+  props: WeekendPickBase & {
+    platform: string;
+    openTarget: WeekendOpenTarget;
+    videoId?: string;
+    videoType?: WeekendVideoType;
+  }
+) {
+  send("weekend_review_read_click", props);
+}
+
+export function trackWeekendPersonalizeClick(weekKey: string) {
+  send("weekend_personalize_click", { weekKey });
+}

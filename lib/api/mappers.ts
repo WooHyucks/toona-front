@@ -1,4 +1,5 @@
 import type {
+  LifetimeWebtoonItem,
   Platform as ApiPlatform,
   WebtoonDetail,
   WebtoonListItem,
@@ -83,4 +84,21 @@ export const RECOMMENDATION_TYPE_LABEL: Record<string, string> = {
 
 export function isApiPlatform(value: string): value is ApiPlatform {
   return value === "NAVER" || value === "KAKAO";
+}
+
+export function mapLifetimeItemToWebtoon(item: LifetimeWebtoonItem): Webtoon {
+  return mapListItemToWebtoon({
+    id: item.id,
+    title: item.title,
+    platform: item.platform,
+    author: item.author,
+    status: item.status,
+    thumbnailUrl: item.thumbnailUrl,
+    officialUrl: item.officialUrl,
+    genres: item.genres ?? [],
+    daysOfWeek: [],
+    latestEpisodeNumber: item.latestEpisodeNumber,
+    totalEpisodeCount: item.totalEpisodeCount,
+    recommendationReady: true,
+  });
 }

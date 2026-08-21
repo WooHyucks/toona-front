@@ -6,6 +6,7 @@ import type { HomeRail } from "@/features/rankings/model/ranking-utils";
 import type { HomeBundle } from "@/lib/api/home";
 import { FallbackHero, HeroSlider } from "@/features/home/HeroSlider";
 import { RecentTasteResumeCard } from "@/features/home/RecentTasteResumeCard";
+import { LifetimeWebtoonsSection } from "@/features/lifetime/LifetimeWebtoonsSection";
 import { ToonaLogo } from "@/components/brand/ToonaLogo";
 import Link from "next/link";
 import { Bookmark, RotateCcw, Search } from "lucide-react";
@@ -65,8 +66,11 @@ export function ToonaHome({ hero, rails }: HomeBundle) {
 
         {hero ? <HeroSlider hero={hero} /> : <FallbackHero />}
 
+        <LifetimeWebtoonsSection />
+
         <RecentTasteResumeCard browseAnchorId="home-browse" />
 
+        {/* 웹툰 이상형 월드컵 — 일시 비노출
         <Link
           href="/world-cup?mode=replay"
           className="mt-4 flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5 transition-colors hover:bg-elevated"
@@ -83,6 +87,7 @@ export function ToonaHome({ hero, rails }: HomeBundle) {
             </span>
           </span>
         </Link>
+        */}
 
         <div id="home-browse" className="scroll-mt-20">
           {!hero && rails.length === 0 ? (

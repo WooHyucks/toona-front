@@ -2,6 +2,7 @@ const SESSION_KEY = "toona_session_id";
 const FAVORITE_ID_KEY = "toona_favorite_webtoon_id";
 const FAVORITE_TITLE_KEY = "toona_favorite_webtoon_title";
 const ONBOARDING_COMPLETED_KEY = "toona_onboarding_completed";
+const WEEKEND_PICKS_SEEN_KEY = "toona_weekend_picks_seen";
 
 /** Legacy keys — migrated once */
 const LEGACY_COMPLETED = "toona.onboarding.completed";
@@ -85,4 +86,22 @@ export function resetOnboarding() {
   localStorage.removeItem(FAVORITE_ID_KEY);
   localStorage.removeItem(FAVORITE_TITLE_KEY);
   // keep session id
+}
+
+export function hasSeenWeekendPicks(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return localStorage.getItem(WEEKEND_PICKS_SEEN_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+export function markWeekendPicksSeen() {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(WEEKEND_PICKS_SEEN_KEY, "true");
+  } catch {
+    /* ignore */
+  }
 }

@@ -19,6 +19,12 @@ export const PRODUCTION_TOONA_API_BASE =
   "https://toona-api-610048355251.asia-northeast3.run.app";
 
 export function getApiBase(): string {
+  // Browser + local/dev: same-origin so phones on LAN hit Next, which rewrites
+  // to FastAPI. Avoids NEXT_PUBLIC_TOONA_API_BASE=127.0.0.1 (the phone itself).
+  if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
+    return "";
+  }
+
   const fromEnv = process.env.NEXT_PUBLIC_TOONA_API_BASE?.trim().replace(
     /\/$/,
     ""
@@ -31,7 +37,7 @@ export function getApiBase(): string {
     return PRODUCTION_TOONA_API_BASE;
   }
 
-  return "http://localhost:8000";
+  return "http://127.0.0.1:8000";
 }
 
 
