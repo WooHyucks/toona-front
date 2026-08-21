@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { DesktopContent } from "@/features/shell/DesktopContent";
 import { RankingRail } from "@/features/rankings/components/RankingRail";
 import type { HomeRail } from "@/features/rankings/model/ranking-utils";
@@ -7,9 +9,10 @@ import type { HomeBundle } from "@/lib/api/home";
 import { FallbackHero, HeroSlider } from "@/features/home/HeroSlider";
 import { RecentTasteResumeCard } from "@/features/home/RecentTasteResumeCard";
 import { LifetimeWebtoonsSection } from "@/features/lifetime/LifetimeWebtoonsSection";
+import { WeekendPicksSection } from "@/features/weekend-picks/WeekendPicksSection";
 import { ToonaLogo } from "@/components/brand/ToonaLogo";
 import Link from "next/link";
-import { Bookmark, RotateCcw, Search } from "lucide-react";
+import { Bookmark, RotateCcw, Search, Sparkles } from "lucide-react";
 
 function MobileHomeHeader() {
   return (
@@ -59,12 +62,36 @@ function EmptyBrowse() {
 }
 
 export function ToonaHome({ hero, rails }: HomeBundle) {
+  const router = useRouter();
+  const [picksAvailable, setPicksAvailable] = useState(false);
+  const [picksReopenKey, setPicksReopenKey] = useState(0);
+
   return (
     <div className="pb-24 md:pb-16">
       <DesktopContent>
         <MobileHomeHeader />
 
         {hero ? <HeroSlider hero={hero} /> : <FallbackHero />}
+
+        {picksAvailable ? (
+          <button
+            type="button"
+            onClick={() => setPicksReopenKey((key) => key + 1)}
+            className="mt-4 flex w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5 text-left transition-colors hover:bg-elevated"
+          >
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+              <Sparkles className="h-4 w-4" aria-hidden />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[14px] font-semibold text-foreground">
+                이번 주말 투나 PICK 보기
+              </span>
+              <span className="mt-0.5 block text-[12px] text-muted-foreground">
+                이번 주 추천 3개를 다시 볼 수 있어요
+              </span>
+            </span>
+          </button>
+        ) : null}
 
         <LifetimeWebtoonsSection />
 
@@ -119,6 +146,12 @@ export function ToonaHome({ hero, rails }: HomeBundle) {
           </Link>
         </div>
       </DesktopContent>
+
+      <WeekendPicksSection
+        reopenKey={picksReopenKey}
+        onAvailableChange={setPicksAvailable}
+        onPersonalize={() => router.push("/onboarding")}
+      />
     </div>
   );
 }
