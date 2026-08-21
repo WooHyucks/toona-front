@@ -37,12 +37,21 @@
 
   html {
     @apply antialiased;
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
     @apply bg-background text-foreground;
     min-height: 100dvh;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  @media (hover: none) and (pointer: coarse) {
+    *:focus,
+    *:focus-visible {
+      outline: none !important;
+      box-shadow: none !important;
+    }
   }
 }
 

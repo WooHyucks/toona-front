@@ -1,13 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Toast, useToast } from "@/components/common/Toast";
-import { addLifetimeWebtoon } from "@/lib/api/lifetime-webtoons";
-import { trackLifetimeCollectionCreated } from "@/lib/analytics";
-import { completeOnboarding, getSessionId } from "@/lib/session";
+import { completeOnboarding } from "@/lib/session";
 
 type CreateLifetimeCollectionCtaProps = {
   sourceWebtoonId: string;
@@ -23,61 +19,37 @@ export function CreateLifetimeCollectionCta({
   skipLabel,
 }: CreateLifetimeCollectionCtaProps) {
   const router = useRouter();
-  const { toast, showToast } = useToast();
-  const [busy, setBusy] = useState(false);
 
-  async function createCollection() {
-    if (busy || !sourceWebtoonId) return;
-    setBusy(true);
-    try {
-      const sessionId = getSessionId();
-      const res = await addLifetimeWebtoon({
-        sessionId,
-        webtoonId: sourceWebtoonId,
-        source: "RECOMMENDATION",
-      });
+  function goGetMoreRecs() {
+    if (sourceWebtoonId) {
       completeOnboarding(sourceWebtoonId, sourceTitle);
-      if (!res.alreadyExists) {
-        trackLifetimeCollectionCreated(sourceWebtoonId, sourceTitle);
-      }
-      try {
-        sessionStorage.setItem("toona_lifetime_just_created", "1");
-      } catch {
-        /* ignore */
-      }
-      router.push("/home");
-    } catch {
-      showToast("보관함을 만들지 못했어요. 다시 시도해주세요.");
-      setBusy(false);
     }
+    router.push("/home");
   }
 
   return (
     <div className="rounded-2xl bg-card px-4 py-5">
       <p className="text-[15px] font-semibold text-foreground">
-        재밌게 본 웹툰, 하나씩 모아보세요.
+        이 취향으로 더 찾아볼까요?
       </p>
       <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
-        {sourceTitle}을 첫 번째 인생 웹툰으로 담아둘게요.
+        홈에서 {sourceTitle}과 비슷한 작품을 이어서 추천받을 수 있어요.
       </p>
       <Button
         type="button"
-        className="mt-4 min-h-12 w-full rounded-2xl text-[15px] font-semibold"
-        disabled={busy}
-        onClick={() => void createCollection()}
+        className="mt-4 min-h-12 w-full rounded-2xl text-[15px] font-semibold hover:bg-primary hover:text-primary-foreground"
+        onClick={goGetMoreRecs}
       >
-        {busy ? "보관함 만드는 중…" : "내 인생 웹툰 보관함 만들기"}
-        {!busy ? <ArrowRight className="h-4 w-4" aria-hidden /> : null}
+        더 많은 웹툰 추천 받기
+        <ArrowRight className="h-4 w-4" aria-hidden />
       </Button>
       <button
         type="button"
-        disabled={busy}
         onClick={onSkipHome}
-        className="mt-2 w-full py-1.5 text-[12px] text-muted-foreground/70 hover:text-muted-foreground disabled:opacity-40"
+        className="mt-2 w-full py-1.5 text-[12px] text-muted-foreground/70"
       >
         {skipLabel}
       </button>
-      <Toast message={toast} />
     </div>
   );
 }
