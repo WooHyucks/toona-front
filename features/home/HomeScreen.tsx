@@ -8,7 +8,7 @@ import type { HomeRail } from "@/features/rankings/model/ranking-utils";
 import type { HomeBundle } from "@/lib/api/home";
 import { FallbackHero, HeroSlider } from "@/features/home/HeroSlider";
 import { RecentTasteResumeCard } from "@/features/home/RecentTasteResumeCard";
-import { LifetimeWebtoonsSection } from "@/features/lifetime/LifetimeWebtoonsSection";
+// import { LifetimeWebtoonsSection } from "@/features/lifetime/LifetimeWebtoonsSection";
 import { WeekendPicksSection } from "@/features/weekend-picks/WeekendPicksSection";
 import { ToonaLogo } from "@/components/brand/ToonaLogo";
 import Link from "next/link";
@@ -77,7 +77,7 @@ export function ToonaHome({ hero, rails }: HomeBundle) {
           <button
             type="button"
             onClick={() => setPicksReopenKey((key) => key + 1)}
-            className="mt-4 flex w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5 text-left transition-colors hover:bg-elevated"
+            className="mt-4 flex w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5 text-left"
           >
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
               <Sparkles className="h-4 w-4" aria-hidden />
@@ -93,7 +93,9 @@ export function ToonaHome({ hero, rails }: HomeBundle) {
           </button>
         ) : null}
 
+        {/* 내 인생 웹툰 — 일시 비노출
         <LifetimeWebtoonsSection />
+        */}
 
         <RecentTasteResumeCard browseAnchorId="home-browse" />
 

@@ -46,7 +46,6 @@ export function WeekendPicksSection({
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState<WeekendPickItem | null>(null);
   const [snap, setSnap] = useState(0);
-  const [paused, setPaused] = useState(false);
   const loop = items.length > 1;
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop,
@@ -125,21 +124,14 @@ export function WeekendPicksSection({
   }, [emblaApi, onSelect, items, open, active]);
 
   useEffect(() => {
-    if (
-      !loop ||
-      !emblaApi ||
-      !open ||
-      active ||
-      reduceMotion ||
-      paused
-    ) {
+    if (!loop || !emblaApi || !open || active || reduceMotion) {
       return;
     }
     const id = window.setInterval(() => {
       emblaApi.scrollNext();
     }, AUTO_MS);
     return () => window.clearInterval(id);
-  }, [loop, emblaApi, open, active, reduceMotion, paused]);
+  }, [loop, emblaApi, open, active, reduceMotion]);
 
   function openReview(item: WeekendPickItem) {
     const review = item.primaryReview;
@@ -205,14 +197,19 @@ export function WeekendPicksSection({
           "md:w-[calc(100%-2rem)] md:max-w-[920px] md:translate-x-[-50%] md:translate-y-[-50%]",
           "md:rounded-3xl md:border md:border-border md:bg-background md:shadow-lg",
           "md:data-[state=open]:zoom-in-95",
-          "[&>button]:z-30",
+          "[&>button]:z-30 [&>button]:opacity-100 [&>button]:hover:opacity-100",
           "[&>button]:text-white md:[&>button]:text-foreground",
           active && "[&>button]:hidden"
         )}
       >
         <div className="relative flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain md:overflow-hidden">
-          <div className="flex min-h-full w-full flex-col justify-center py-12 md:min-h-0 md:justify-start md:py-0">
-            <DialogHeader className="shrink-0 px-5 pb-5 text-center md:px-6 md:pb-3 md:pt-5 md:pr-12 md:text-left">
+          <div
+            className={cn(
+              "flex min-h-full w-full flex-col justify-center md:min-h-0 md:justify-start md:py-0",
+              "px-0 pt-[max(2.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+            )}
+          >
+            <DialogHeader className="shrink-0 px-5 pb-4 text-center md:px-6 md:pb-3 md:pt-5 md:pr-12 md:text-left">
               <p className="text-[12px] font-medium text-primary">
                 이번 주말 투나 PICK
               </p>
@@ -224,11 +221,7 @@ export function WeekendPicksSection({
               </DialogDescription>
             </DialogHeader>
 
-            <div
-              className="w-full md:min-h-0 md:flex-1 md:overflow-y-auto"
-              onMouseEnter={() => setPaused(true)}
-              onMouseLeave={() => setPaused(false)}
-            >
+            <div className="w-full md:min-h-0 md:flex-1 md:overflow-y-auto">
               <div className="relative md:hidden">
                 <div
                   ref={emblaRef}
@@ -238,9 +231,10 @@ export function WeekendPicksSection({
                     {items.map((item, index) => (
                       <div
                         key={item.webtoon.id}
-                        className="min-w-0 shrink-0 grow-0 basis-[78%] px-2"
+                        className="min-w-0 shrink-0 grow-0 basis-[72%] px-2"
                       >
                         <WeekendPickCard
+                          compact
                           item={item}
                           weekKey={weekKey}
                           priority={index === 0}
@@ -251,7 +245,7 @@ export function WeekendPicksSection({
                   </div>
                 </div>
                 {loop ? (
-                  <div className="mt-4 flex justify-center gap-1.5">
+                  <div className="mt-3 flex justify-center gap-1.5">
                     {items.map((item, index) => (
                       <button
                         key={item.webtoon.id}
@@ -285,7 +279,7 @@ export function WeekendPicksSection({
               </div>
             </div>
 
-            <div className="shrink-0 px-5 pt-6 md:border-t md:border-border md:px-6 md:py-4">
+            <div className="shrink-0 px-5 pt-4 md:border-t md:border-border md:px-6 md:py-4">
               <p className="text-center text-[13px] font-medium text-white/70 md:text-muted-foreground">
                 셋 다 취향이 아니라면?
               </p>
@@ -296,7 +290,7 @@ export function WeekendPicksSection({
                   closeModal();
                   onPersonalize?.();
                 }}
-                className="mt-2 flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 text-[15px] font-semibold text-primary-foreground md:mx-auto md:max-w-md"
+                className="mt-2 flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 text-[15px] font-semibold text-primary-foreground hover:bg-primary hover:text-primary-foreground md:mx-auto md:max-w-md"
               >
                 내 취향으로 추천받기
                 <ArrowRight className="h-4 w-4" aria-hidden />

@@ -166,7 +166,7 @@ export function WeekendReviewSheet({
         <button
           type="button"
           aria-label="리뷰 닫기"
-          className="absolute right-3 top-3 z-10 rounded-full p-2 text-muted-foreground transition hover:bg-elevated hover:text-foreground"
+          className="absolute right-3 top-3 z-10 rounded-full p-2 text-muted-foreground"
           onClick={() => {
             if (!embedded) emitClose();
             onClose();
@@ -240,7 +240,7 @@ export function WeekendReviewSheet({
               href={watchUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-2 inline-block text-[12px] text-muted-foreground underline-offset-2 hover:underline"
+              className="mt-2 inline-block text-[12px] text-muted-foreground"
             >
               유튜브에서 리뷰 보기
             </a>
@@ -271,7 +271,7 @@ export function WeekendReviewSheet({
                 : "_blank"
             }
             rel="noopener noreferrer"
-            className="flex min-h-12 w-full items-center justify-center rounded-2xl bg-primary px-4 text-[15px] font-semibold text-primary-foreground"
+            className="flex min-h-12 w-full items-center justify-center rounded-2xl bg-primary px-4 text-[15px] font-semibold text-primary-foreground hover:bg-primary hover:text-primary-foreground"
             onClick={(event) => {
               onReadClick();
               void postWebtoonAction({
@@ -297,7 +297,7 @@ export function WeekendReviewSheet({
         <Button
           type="button"
           variant="outline"
-          className="mt-2 h-12 w-full"
+          className="mt-2 h-12 w-full hover:bg-card hover:text-foreground"
           onClick={() => {
             if (!embedded) emitClose();
             onClose();

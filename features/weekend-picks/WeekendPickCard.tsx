@@ -27,6 +27,7 @@ type Props = {
   weekKey: string;
   priority?: boolean;
   className?: string;
+  compact?: boolean;
   onReview: () => void;
 };
 
@@ -35,6 +36,7 @@ export function WeekendPickCard({
   weekKey,
   priority,
   className,
+  compact = false,
   onReview,
 }: Props) {
   const router = useRouter();
@@ -123,13 +125,19 @@ export function WeekendPickCard({
       isMobile,
     }) === "app_bridge";
 
+  const btnPrimaryHover = "hover:bg-primary hover:text-primary-foreground";
+  const btnOutlineHover = "hover:bg-card hover:text-foreground";
+
   const actions = (
     <div className="mt-auto flex gap-2 pt-3">
       {hasReview ? (
         <Button
           type="button"
           size="sm"
-          className="h-10 min-h-10 flex-1 px-2.5 text-[13px]"
+          className={cn(
+            "h-10 min-h-10 flex-1 px-2.5 text-[13px]",
+            btnPrimaryHover
+          )}
           onClick={onReview}
         >
           ▶ 리뷰로 찍먹
@@ -140,7 +148,10 @@ export function WeekendPickCard({
           asChild
           size="sm"
           variant={hasReview ? "outline" : "default"}
-          className="h-10 min-h-10 flex-1 px-2.5 text-[13px]"
+          className={cn(
+            "h-10 min-h-10 flex-1 px-2.5 text-[13px]",
+            hasReview ? btnOutlineHover : btnPrimaryHover
+          )}
         >
           <a
             href={readHref}
@@ -156,7 +167,10 @@ export function WeekendPickCard({
           type="button"
           size="sm"
           variant={hasReview ? "outline" : "default"}
-          className="h-10 min-h-10 flex-1 px-2.5 text-[13px]"
+          className={cn(
+            "h-10 min-h-10 flex-1 px-2.5 text-[13px]",
+            hasReview ? btnOutlineHover : btnPrimaryHover
+          )}
           onClick={() => void onDirectRead()}
         >
           바로 보러가기
@@ -173,7 +187,12 @@ export function WeekendPickCard({
         className
       )}
     >
-      <div className="relative aspect-[3/4] w-full overflow-hidden bg-elevated">
+      <div
+        className={cn(
+          "relative w-full overflow-hidden bg-elevated aspect-[3/4]",
+          compact && "max-h-[36vh]"
+        )}
+      >
         <WebtoonCover
           src={thumb}
           alt={item.webtoon.title}
