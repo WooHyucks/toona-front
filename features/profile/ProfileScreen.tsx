@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, ChevronRight } from "lucide-react";
+import { ToonaInstagramLink } from "@/components/brand/ToonaInstagramLink";
 import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
 import { DesktopContent, DesktopPageHeader } from "@/features/shell/DesktopContent";
 
@@ -73,12 +74,15 @@ export function ProfileScreen() {
           </div>
         </div>
 
-        <Link
-          href="/onboarding"
-          className="mt-8 block text-center text-[12px] text-muted-foreground md:mt-10 md:text-[13px]"
-        >
-          온보딩 다시 보기
-        </Link>
+        <div className="mt-8 flex flex-col items-center gap-4 md:mt-10">
+          <ToonaInstagramLink className="h-11 w-11 rounded-xl bg-card" />
+          <Link
+            href="/onboarding"
+            className="block text-center text-[12px] text-muted-foreground md:text-[13px]"
+          >
+            온보딩 다시 보기
+          </Link>
+        </div>
       </DesktopContent>
     </div>
   );

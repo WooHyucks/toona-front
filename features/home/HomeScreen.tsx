@@ -11,8 +11,9 @@ import { RecentTasteResumeCard } from "@/features/home/RecentTasteResumeCard";
 // import { LifetimeWebtoonsSection } from "@/features/lifetime/LifetimeWebtoonsSection";
 import { WeekendPicksSection } from "@/features/weekend-picks/WeekendPicksSection";
 import { ToonaLogo } from "@/components/brand/ToonaLogo";
+import { ToonaInstagramLink } from "@/components/brand/ToonaInstagramLink";
 import Link from "next/link";
-import { Bookmark, RotateCcw, Search, Sparkles } from "lucide-react";
+import { RotateCcw, Search, Sparkles } from "lucide-react";
 
 function MobileHomeHeader() {
   return (
@@ -24,25 +25,18 @@ function MobileHomeHeader() {
         <Link
           href="/search"
           aria-label="검색"
-          className="flex h-11 w-11 items-center justify-center rounded-xl bg-card text-muted-foreground transition-colors hover:text-foreground"
+          className="flex h-11 w-11 items-center justify-center rounded-xl bg-card text-muted-foreground"
         >
           <Search className="h-5 w-5" />
         </Link>
         <Link
           href="/onboarding"
           aria-label="취향 다시 설정"
-          className="flex h-11 w-11 items-center justify-center rounded-xl bg-card text-muted-foreground transition-colors hover:text-foreground"
+          className="flex h-11 w-11 items-center justify-center rounded-xl bg-card text-muted-foreground"
         >
           <RotateCcw className="h-5 w-5" />
         </Link>
-        <button
-          type="button"
-          aria-label="저장 (준비 중)"
-          disabled
-          className="flex h-11 w-11 items-center justify-center rounded-xl bg-card text-muted-foreground/50"
-        >
-          <Bookmark className="h-5 w-5" />
-        </button>
+        <ToonaInstagramLink className="flex h-11 w-11 rounded-xl bg-card" />
       </div>
     </header>
   );

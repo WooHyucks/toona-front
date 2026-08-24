@@ -103,7 +103,7 @@ export function AddLifetimeWebtoonSheet({
               onChange={(e) => setQuery(e.target.value)}
               placeholder="웹툰 제목 검색"
               autoFocus
-              className="min-w-0 flex-1 bg-transparent text-[14px] text-foreground outline-none placeholder:text-muted-foreground"
+              className="min-w-0 flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground md:text-[14px]"
             />
             {query ? (
               <button

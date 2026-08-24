@@ -104,7 +104,7 @@ http://localhost:3000
 
 ## Amplitude
 
-유입·추천 니즈 확인용 이벤트 5개. 상세: [`AMPLITUDE.md`](./AMPLITUDE.md)
+온보딩·월드컵·홈·네이버 오픈·Weekend Picks. 상세: [`AMPLITUDE.md`](./AMPLITUDE.md)
 
 ## localStorage
 
@@ -209,6 +209,5 @@ http://localhost:3000
 ## TODO
 
 - 저장 목록 API 연동
-- analytics SDK 연결
 - 레거시 Supabase 헬퍼/`getRankedWebtoons` 파일 삭제
 - 백엔드: 상세/랭킹 회차 필드 OpenAPI와 실응답 일치 여부 지속 검증

@@ -531,7 +531,7 @@ export function OnboardingSearchScreen() {
               setQuery(e.target.value);
               setSelected(null);
             }}
-            className="h-12 w-full rounded-2xl border border-border bg-card pl-10 pr-10 text-[14px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0"
+            className="h-12 w-full rounded-2xl border border-border bg-card pl-10 pr-10 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 md:text-[14px]"
           />
           {query ? (
             <button

@@ -114,7 +114,7 @@ export function SearchScreen() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="제목, 작가 검색"
-            className="flex-1 bg-transparent text-[14px] text-foreground outline-none placeholder:text-muted-foreground md:text-[15px]"
+            className="flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground md:text-[15px]"
           />
           {query ? (
             <button

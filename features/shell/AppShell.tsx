@@ -13,6 +13,7 @@ import {
   User,
 } from "lucide-react";
 import { ToonaLogo } from "@/components/brand/ToonaLogo";
+import { ToonaInstagramLink } from "@/components/brand/ToonaInstagramLink";
 import { cn } from "@/lib/utils";
 
 export const NAV = [
@@ -134,6 +135,7 @@ function DesktopSidebarInner() {
           <br />
           한 곳에서 발견하세요
         </p>
+        <ToonaInstagramLink className="h-10 w-10 rounded-xl bg-card" />
       </div>
     </aside>
   );

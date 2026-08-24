@@ -103,8 +103,8 @@ function sendOnce(dedupeKey: string, event: string, properties?: Props) {
 }
 
 /**
- * Legacy shim — CustomEvent + console only.
- * Does NOT forward arbitrary events to Amplitude (only the 5 MVP events below).
+ * Legacy shim — CustomEvent only.
+ * Does NOT forward to Amplitude. See AMPLITUDE.md for events that do.
  */
 export function track(event: string, properties?: Props) {
   if (typeof window === "undefined") return;
@@ -163,7 +163,7 @@ export function trackHomeView() {
   sendOnce("home_view", "home_view");
 }
 
-/** First lifetime collection created from recommendation source */
+/** Unused: recommendation CTA no longer creates a lifetime collection. */
 export function trackLifetimeCollectionCreated(
   sourceWebtoonId: string,
   sourceTitle: string
@@ -171,7 +171,7 @@ export function trackLifetimeCollectionCreated(
   send("lifetime_collection_created", { sourceWebtoonId, sourceTitle });
 }
 
-/** Additional lifetime webtoon added from home */
+/** Unused while home lifetime section is commented out. */
 export function trackLifetimeWebtoonAdded(webtoonId: string, title: string) {
   send("lifetime_webtoon_added", { webtoonId, title });
 }
@@ -204,7 +204,7 @@ type WeekendPickBase = {
   weekKey: string;
 };
 
-/** Weekend Picks section shown with at least one item */
+/** Weekend Picks modal actually opened (auto or reopen) */
 export function trackWeekendPicksView(weekKey: string, pickCount: number) {
   sendOnce(`weekend_picks_view:${weekKey}`, "weekend_picks_view", {
     weekKey,
