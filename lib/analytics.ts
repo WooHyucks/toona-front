@@ -271,3 +271,35 @@ export function trackWeekendReviewReadClick(
 export function trackWeekendPersonalizeClick(weekKey: string) {
   send("weekend_personalize_click", { weekKey });
 }
+
+type RecReadProps = {
+  webtoonId: string;
+  title: string;
+  episodeCount?: number | null;
+  serializationStatus?: string | null;
+  platform?: string | null;
+};
+
+export function trackBestRecommendationReadClick(props: RecReadProps) {
+  send("best_recommendation_read_click", {
+    webtoonId: props.webtoonId,
+    title: props.title,
+    episodeCount: props.episodeCount ?? undefined,
+    serializationStatus: props.serializationStatus ?? undefined,
+    platform: props.platform ?? undefined,
+  });
+}
+
+export function trackAlternativeRecommendationReadClick(props: RecReadProps) {
+  send("alternative_recommendation_read_click", {
+    webtoonId: props.webtoonId,
+    title: props.title,
+    episodeCount: props.episodeCount ?? undefined,
+    serializationStatus: props.serializationStatus ?? undefined,
+    platform: props.platform ?? undefined,
+  });
+}
+
+export function trackWeekendPicksButtonClick(weekKey?: string) {
+  send("weekend_picks_button_click", { weekKey: weekKey || undefined });
+}

@@ -89,6 +89,9 @@ export interface MatchedTag {
   label: string;
 }
 
+export type SerializationStatus = WebtoonStatus | "연재중" | "완결" | "휴재" | string;
+export type RecommendationRole = "BEST" | "BEST_MATCH" | "ALTERNATIVE" | string;
+
 export interface RecommendedWebtoon {
   id: string;
   title: string;
@@ -101,6 +104,8 @@ export interface RecommendedWebtoon {
   genres: string[];
   latestEpisodeNumber: number | null;
   totalEpisodeCount: number | null;
+  episodeCount?: number | null;
+  serializationStatus?: SerializationStatus | null;
 }
 
 export interface RecommendationItem {
@@ -109,6 +114,9 @@ export interface RecommendationItem {
   matchedTags: MatchedTag[];
   recommendationReason: string;
   webtoon: RecommendedWebtoon;
+  recommendationRole?: RecommendationRole | null;
+  episodeCount?: number | null;
+  serializationStatus?: SerializationStatus | null;
 }
 
 export interface RecommendationSections {
@@ -127,6 +135,9 @@ export interface RecommendationsResponse {
   sections: RecommendationSections;
   /** 0–3 slides; may be omitted by older backends */
   heroSlides?: RecommendationItem[];
+  /** Newer backends — prefer over scanning `recommendations` */
+  bestRecommendation?: RecommendationItem | null;
+  alternativeRecommendations?: RecommendationItem[];
 }
 
 export interface TasteAnalysisResponse {
@@ -390,6 +401,8 @@ export interface WeekendPickItem {
 
 export interface WeekendPicksResponse {
   weekKey: string;
+  requestedWeekKey?: string;
+  isFallback?: boolean;
   items?: WeekendPickItem[];
   picks?: WeekendPickItem[];
 }

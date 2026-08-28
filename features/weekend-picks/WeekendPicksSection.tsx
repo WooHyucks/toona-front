@@ -14,6 +14,7 @@ import {
 import { fetchWeekendPicks, getWeekendPickItems } from "@/lib/api/weekend-picks";
 import {
   trackWeekendPersonalizeClick,
+  trackWeekendPicksButtonClick,
   trackWeekendPicksView,
   trackWeekendReviewClose,
   trackWeekendReviewOpen,
@@ -25,7 +26,7 @@ import type { WeekendPickItem } from "@/types/api";
 import { WeekendPickCard } from "./WeekendPickCard";
 import { WeekendReviewSheet } from "./WeekendReviewSheet";
 import { resolvePickOfficialUrl } from "./open";
-import { hasSeenWeekendPicks, markWeekendPicksSeen } from "@/lib/session";
+import { markWeekendPicksSeen } from "@/lib/session";
 
 const AUTO_MS = 4500;
 
@@ -71,9 +72,6 @@ export function WeekendPicksSection({
         next.forEach((item) => {
           void resolvePickOfficialUrl(item.webtoon);
         });
-        if (!hasSeenWeekendPicks()) {
-          setOpen(true);
-        }
       })
       .catch(() => {
         if (controller.signal.aborted) return;
@@ -86,6 +84,7 @@ export function WeekendPicksSection({
 
   useEffect(() => {
     if (reopenKey > 0 && items.length > 0) {
+      trackWeekendPicksButtonClick(weekKey);
       setActive(null);
       setOpen(true);
     }

@@ -36,6 +36,9 @@
 | `weekend_direct_read_click` | 카드 「바로 보러가기」 | 클릭마다 |
 | `weekend_review_read_click` | 리뷰에서 웹툰 CTA | 클릭마다 |
 | `weekend_personalize_click` | 「내 취향으로 추천받기」 | 클릭마다 |
+| `weekend_picks_button_click` | 「이번 주말, 투나가 골라줘」 | 클릭마다 |
+| `best_recommendation_read_click` | BEST 「정주행 시작하기」 | 클릭마다 |
+| `alternative_recommendation_read_click` | 다른 선택지 웹툰 CTA | 클릭마다 |
 
 JS 세션 = 탭을 새로고침하기 전까지의 in-memory `sendOnce`. Amplitude User Session과 다릅니다.
 
@@ -159,7 +162,7 @@ Weekend Picks 「바로 보러가기」는 아래 `weekend_*_read_click`를 씁�
 
 | | |
 |--|--|
-| 의미 | 추천 모달이 실제로 열림 (자동 / 다시 보기 모두) |
+| 의미 | 추천 모달이 실제로 열림 (버튼 클릭) |
 | 시점 | `WeekendPicksSection` `open === true` 이고 아이템이 있을 때 |
 | Properties | `weekKey`, `pickCount` |
 | 중복 | `weekKey`당 JS 세션 1회 |
@@ -226,6 +229,25 @@ Weekend Picks 「바로 보러가기」는 아래 `weekend_*_read_click`를 씁�
 
 온보딩에서는 검색 포커스, 홈에서는 `/onboarding`으로 이동합니다.
 
+### `weekend_picks_button_click`
+
+| | |
+|--|--|
+| 의미 | 「🔥 이번 주말, 투나가 골라줘」 |
+| 시점 | 온보딩/홈 버튼 클릭 → 모달 오픈 |
+| Properties | `weekKey` |
+
+첫 방문 자동 오픈은 없습니다.
+
+### `best_recommendation_read_click` / `alternative_recommendation_read_click`
+
+| | |
+|--|--|
+| 의미 | 추천 결과에서 작품 열기 |
+| Properties | `webtoonId`, `title`, `episodeCount`, `serializationStatus`, `platform` |
+
+`recommendation_viewed`는 그대로 유지합니다. `webtoon_clicked`도 네이버 공식 오픈 시 그대로 갑니다.
+
 ---
 
 ## 현재 보내지 않음
@@ -269,10 +291,8 @@ worldcup_view
 ### Funnel C — Weekend Picks
 
 ```
-weekend_picks_view → weekend_direct_read_click
-weekend_picks_view → weekend_review_open → weekend_review_play → weekend_review_read_click
-weekend_picks_view → weekend_review_open → weekend_review_read_click
-weekend_picks_view → weekend_personalize_click
+weekend_picks_button_click → weekend_picks_view → weekend_direct_read_click
+weekend_picks_button_click → weekend_picks_view → weekend_review_open → weekend_review_read_click
 ```
 
 온보딩에서 픽을 본 뒤 `weekend_personalize_click` → `webtoon_selected` → Funnel A로 이어질 수 있습니다.
@@ -289,7 +309,8 @@ weekend_picks_view → weekend_personalize_click
 | `recommendation_viewed` | `features/onboarding/components/ResultScreen.tsx` |
 | `home_view` | `features/home/HomeClient.tsx` |
 | `webtoon_clicked` | `lib/open-webtoon.ts` (`openNaverUrl`) |
-| `weekend_picks_view` / `weekend_review_open` / `weekend_personalize_click` | `features/weekend-picks/WeekendPicksSection.tsx` |
+| `weekend_picks_view` / `weekend_picks_button_click` / `weekend_review_open` / `weekend_personalize_click` | `features/weekend-picks/WeekendPicksSection.tsx` |
+| `best_recommendation_read_click` / `alternative_recommendation_read_click` | `features/recommendations/BestFirstResult.tsx` |
 | `weekend_pick_impression` / `weekend_direct_read_click` | `features/weekend-picks/WeekendPickCard.tsx` |
 | `weekend_review_play` / `weekend_review_read_click` | `features/weekend-picks/WeekendReviewSheet.tsx` |
 | `weekend_review_close` | `WeekendPicksSection` (embedded) · `WeekendReviewSheet` (standalone) |

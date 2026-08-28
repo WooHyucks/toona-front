@@ -1,185 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { fetchRecommendations } from "@/lib/api/recommendations";
 import { ToonaApiError } from "@/lib/api/client";
-import {
-  getOpenWebtoonCtaLabel,
-  normalizePlatform,
-  openWebtoon,
-} from "@/lib/open-webtoon";
-import { RECOMMENDATION_TYPE_LABEL, toUiPlatform } from "@/lib/api/mappers";
 import {
   completeOnboarding,
   getSessionId,
   setFavoriteWebtoon,
 } from "@/lib/session";
 import { track, trackRecommendationViewed } from "@/lib/analytics";
-import { WebtoonCover } from "@/features/webtoons/components/WebtoonCover";
-import { PlatformBadge } from "@/features/webtoons/components/PlatformBadge";
 import { RecommendationShareButton } from "@/features/recommendations/RecommendationShareButton";
 import { CreateLifetimeCollectionCta } from "@/features/lifetime/CreateLifetimeCollectionCta";
-import { getEpisodeLabel } from "@/lib/episode";
-import { useIsMobile } from "@/hooks/useIsMobile";
-import type { RecommendationItem, RecommendationsResponse } from "@/types/api";
+import {
+  AlternativeRecommendationCard,
+  BestRecommendationCard,
+} from "@/features/recommendations/BestFirstResult";
+import {
+  hasRecommendationResults,
+  pickAlternativeRecommendations,
+  pickBestRecommendation,
+} from "@/lib/recommendations-result";
+import type { RecommendationsResponse } from "@/types/api";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { Button } from "@/components/ui/button";
-
-function RecCard({
-  item,
-  sourceId,
-  sessionId,
-  fromShare,
-}: {
-  item: RecommendationItem;
-  sourceId: string;
-  sessionId: string;
-  fromShare: boolean;
-}) {
-  const router = useRouter();
-  const isMobile = useIsMobile();
-  const platform = normalizePlatform(String(item.webtoon.platform));
-  const hasUrl = Boolean(item.webtoon.officialUrl);
-  const canOpen = platform === "KAKAO" ? Boolean(item.webtoon.id) : hasUrl;
-  const episode = getEpisodeLabel({
-    status: item.webtoon.status,
-    latestEpisodeNumber: item.webtoon.latestEpisodeNumber,
-    totalEpisodeCount: item.webtoon.totalEpisodeCount,
-  });
-  const tags = item.matchedTags.slice(0, 3);
-  const reason = item.recommendationReason?.trim();
-  const ctaLabel = canOpen
-    ? getOpenWebtoonCtaLabel(item.webtoon.platform, {
-        isMobile,
-        officialUrl: item.webtoon.officialUrl,
-      })
-    : "링크를 준비 중이에요";
-
-  return (
-    <article className="rounded-2xl bg-card p-4">
-      <div className="mb-3 flex items-start gap-3">
-        <div
-          className="relative w-[72px] shrink-0 overflow-hidden rounded-xl bg-elevated"
-          style={{ aspectRatio: "2/3" }}
-        >
-          <WebtoonCover
-            src={item.webtoon.thumbnailUrl || null}
-            alt={item.webtoon.title}
-            fill
-            className="object-cover"
-          />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="mb-1 text-[11px] font-semibold text-primary">
-            {RECOMMENDATION_TYPE_LABEL[item.recommendationType] ??
-              item.recommendationType}
-          </p>
-          <h3 className="text-[16px] font-bold leading-snug text-foreground">
-            {item.webtoon.title}
-          </h3>
-          <div className="mt-2 flex min-w-0 flex-wrap items-center gap-1.5">
-            <PlatformBadge
-              platform={toUiPlatform(String(item.webtoon.platform))}
-            />
-            {episode ? (
-              <span className="min-w-0 truncate text-[11px] text-muted-foreground">
-                {episode}
-              </span>
-            ) : null}
-          </div>
-        </div>
-      </div>
-
-      {reason ? (
-        <p className="mb-3 text-[14px] font-medium leading-relaxed text-foreground">
-          {reason}
-        </p>
-      ) : null}
-
-      {tags.length > 0 ? (
-        <div className="mb-4 flex flex-wrap gap-1.5">
-          {tags.map((tag) => (
-            <span
-              key={tag.code}
-              className="rounded-full bg-primary/15 px-2 py-0.5 text-[11px] text-primary"
-            >
-              {tag.label}
-            </span>
-          ))}
-        </div>
-      ) : null}
-
-      <button
-        type="button"
-        disabled={!canOpen}
-        onClick={() => {
-          if (fromShare) {
-            track("shared_recommendation_webtoon_clicked", {
-              sourceWebtoonId: sourceId,
-              targetWebtoonId: item.webtoon.id,
-            });
-          }
-          openWebtoon({
-            webtoon: {
-              id: item.webtoon.id,
-              platform: item.webtoon.platform,
-              officialUrl: item.webtoon.officialUrl,
-            },
-            router,
-            action: {
-              sessionId,
-              sourceWebtoonId: sourceId,
-              targetWebtoonId: item.webtoon.id,
-              actionType: "CLICKED",
-              recommendationType: item.recommendationType,
-            },
-          });
-        }}
-        className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl bg-primary text-[13px] font-semibold text-primary-foreground disabled:opacity-40"
-      >
-        {platform === "NAVER" ? (
-          <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-        ) : null}
-        {ctaLabel}
-      </button>
-    </article>
-  );
-}
-
-function SectionBlock({
-  title,
-  items,
-  sourceId,
-  sessionId,
-  fromShare,
-}: {
-  title: string;
-  items: RecommendationItem[];
-  sourceId: string;
-  sessionId: string;
-  fromShare: boolean;
-}) {
-  if (items.length === 0) return null;
-  return (
-    <section className="mb-8">
-      <h2 className="mb-3 text-[16px] font-semibold text-foreground">{title}</h2>
-      <div className="space-y-3">
-        {items.map((item) => (
-          <RecCard
-            key={`${item.recommendationType}-${item.webtoon.id}`}
-            item={item}
-            sourceId={sourceId}
-            sessionId={sessionId}
-            fromShare={fromShare}
-          />
-        ))}
-      </div>
-    </section>
-  );
-}
 
 export type ResultScreenProps = {
   webtoonId: string;
@@ -209,6 +55,12 @@ export function ResultScreen({
   const [errorMessage, setErrorMessage] = useState("");
   const [errorCode, setErrorCode] = useState("");
   const [sessionId, setSessionId] = useState("");
+
+  const best = useMemo(() => pickBestRecommendation(data), [data]);
+  const alternatives = useMemo(
+    () => pickAlternativeRecommendations(data, best),
+    [data, best]
+  );
 
   useEffect(() => {
     setSessionId(getSessionId());
@@ -251,10 +103,7 @@ export function ResultScreen({
         const res = await fetchRecommendations(webtoonId, sid);
         if (cancelled) return;
         setData(res);
-        const empty =
-          (res.sections?.completed?.length ?? 0) === 0 &&
-          (res.sections?.ongoing?.length ?? 0) === 0;
-        setStatus(empty ? "empty" : "success");
+        setStatus(hasRecommendationResults(res) ? "success" : "empty");
       } catch (err) {
         if (cancelled) return;
         setStatus("error");
@@ -374,20 +223,15 @@ export function ResultScreen({
         웹툰 다시 고르기
       </button>
       <p className="text-[12px] font-medium text-muted-foreground">
-        {fromShare ? "추천 결과" : "이번 주말 정주행 TOP3"}
+        {fromShare ? "추천 결과" : `${sourceTitle}을 기준으로 골랐어요`}
       </p>
       <h1 className="mt-1 text-[22px] font-bold tracking-[-0.02em] text-foreground">
         {fromShare
           ? `${sourceTitle}을 재미있게 봤다면`
-          : `${sourceTitle}을 기준으로 골랐어요`}
+          : "이번 주말엔 이거 보세요"}
       </h1>
-      <p className="mt-2 text-[13px] text-muted-foreground">
-        {fromShare
-          ? "이 작품들도 잘 맞을 수 있어요."
-          : "완결작과 연재작으로 나눠 보여드릴게요."}
-      </p>
 
-      {status === "empty" ? (
+      {status === "empty" || !best ? (
         <div className="mt-10 rounded-2xl bg-card px-4 py-10 text-center">
           <p className="text-[15px] font-medium text-foreground">
             비슷한 작품을 아직 찾지 못했어요.
@@ -401,25 +245,35 @@ export function ResultScreen({
           </Button>
         </div>
       ) : (
-        <div className="mt-8">
-          <SectionBlock
-            title="지금 정주행하기 좋은 완결작"
-            items={data?.sections.completed ?? []}
+        <div className="mt-5">
+          <BestRecommendationCard
+            item={best}
             sourceId={webtoonId}
             sessionId={sessionId}
             fromShare={fromShare}
           />
-          <SectionBlock
-            title="매주 기다려도 좋은 연재작"
-            items={data?.sections.ongoing ?? []}
-            sourceId={webtoonId}
-            sessionId={sessionId}
-            fromShare={fromShare}
-          />
+          {alternatives.length > 0 ? (
+            <section className="mt-6">
+              <h2 className="mb-3 text-[14px] font-semibold text-muted-foreground">
+                다른 선택지
+              </h2>
+              <div className="grid grid-cols-2 gap-2.5">
+                {alternatives.map((item) => (
+                  <AlternativeRecommendationCard
+                    key={`${item.recommendationType}-${item.webtoon.id}`}
+                    item={item}
+                    sourceId={webtoonId}
+                    sessionId={sessionId}
+                    fromShare={fromShare}
+                  />
+                ))}
+              </div>
+            </section>
+          ) : null}
         </div>
       )}
 
-      {status !== "empty" ? (
+      {status !== "empty" && best ? (
         <div className="mt-6 space-y-3">
           {fromShare ? (
             <>

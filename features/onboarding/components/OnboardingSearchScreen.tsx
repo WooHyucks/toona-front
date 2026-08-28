@@ -28,6 +28,7 @@ import { prepareTasteAnalysis } from "@/lib/taste-flow";
 import { trackPageView } from "@/lib/analytics";
 import { ToonaLogo } from "@/components/brand/ToonaLogo";
 import { WeekendPicksSection } from "@/features/weekend-picks/WeekendPicksSection";
+import { WeekendPicksOpenButton } from "@/features/weekend-picks/WeekendPicksOpenButton";
 
 type GenreFilterId = "all" | ToonaGenre;
 
@@ -496,13 +497,10 @@ export function OnboardingSearchScreen() {
             제일 재밌게 본 웹툰 하나만 골라보세요.
           </p>
           {picksAvailable ? (
-            <button
-              type="button"
-              onClick={() => setPicksReopenKey((key) => key + 1)}
-              className="mt-3 inline-flex min-h-10 items-center rounded-full bg-card px-3.5 text-[13px] font-semibold text-primary"
-            >
-              이번 주말 투나 PICK 보기
-            </button>
+            <WeekendPicksOpenButton
+              available
+              onOpen={() => setPicksReopenKey((key) => key + 1)}
+            />
           ) : null}
         </div>
 

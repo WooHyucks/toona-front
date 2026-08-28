@@ -10,10 +10,11 @@ import { FallbackHero, HeroSlider } from "@/features/home/HeroSlider";
 import { RecentTasteResumeCard } from "@/features/home/RecentTasteResumeCard";
 // import { LifetimeWebtoonsSection } from "@/features/lifetime/LifetimeWebtoonsSection";
 import { WeekendPicksSection } from "@/features/weekend-picks/WeekendPicksSection";
+import { WeekendPicksOpenButton } from "@/features/weekend-picks/WeekendPicksOpenButton";
 import { ToonaLogo } from "@/components/brand/ToonaLogo";
 import { ToonaInstagramLink } from "@/components/brand/ToonaInstagramLink";
 import Link from "next/link";
-import { RotateCcw, Search, Sparkles } from "lucide-react";
+import { RotateCcw, Search } from "lucide-react";
 
 function MobileHomeHeader() {
   return (
@@ -68,23 +69,11 @@ export function ToonaHome({ hero, rails }: HomeBundle) {
         {hero ? <HeroSlider hero={hero} /> : <FallbackHero />}
 
         {picksAvailable ? (
-          <button
-            type="button"
-            onClick={() => setPicksReopenKey((key) => key + 1)}
-            className="mt-4 flex w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5 text-left"
-          >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
-              <Sparkles className="h-4 w-4" aria-hidden />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-[14px] font-semibold text-foreground">
-                이번 주말 투나 PICK 보기
-              </span>
-              <span className="mt-0.5 block text-[12px] text-muted-foreground">
-                이번 주 추천 3개를 다시 볼 수 있어요
-              </span>
-            </span>
-          </button>
+          <WeekendPicksOpenButton
+            available
+            onOpen={() => setPicksReopenKey((key) => key + 1)}
+            className="mt-4 flex min-h-12 w-full items-center justify-center rounded-2xl bg-primary px-4 text-[15px] font-semibold text-primary-foreground"
+          />
         ) : null}
 
         {/* 내 인생 웹툰 — 일시 비노출
