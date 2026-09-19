@@ -1,6 +1,9 @@
 import type { WebtoonActionRequest } from "@/types/api";
 import { postWebtoonAction } from "@/lib/api/actions";
-import { trackWebtoonClicked } from "@/lib/analytics";
+import {
+  inferWebtoonClickSource,
+  trackWebtoonClicked,
+} from "@/lib/analytics";
 import {
   extractNaverTitleId,
   isMobileUserAgent,
@@ -75,6 +78,7 @@ function openNaverUrl(opts: {
     openTarget: resolved.openTarget,
     webtoonId: opts.webtoonId,
     naverTitleId: resolved.naverTitleId,
+    source: inferWebtoonClickSource(),
   });
 
   if (resolved.openTarget === "app_bridge") {
@@ -102,6 +106,12 @@ export function openWebtoon(opts: {
   const url = getOfficialUrl(webtoon);
 
   if (platform === "KAKAO") {
+    trackWebtoonClicked({
+      platform: "kakao",
+      openTarget: "web",
+      webtoonId: webtoon.id,
+      source: inferWebtoonClickSource(),
+    });
     logAction(action);
     router.push(`/viewer/${encodeURIComponent(webtoon.id)}`);
     return true;

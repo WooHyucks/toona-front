@@ -1,22 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DesktopContent } from "@/features/shell/DesktopContent";
 import { RankingRail } from "@/features/rankings/components/RankingRail";
 import type { HomeRail } from "@/features/rankings/model/ranking-utils";
 import type { HomeBundle } from "@/lib/api/home";
-import { FallbackHero, HeroSlider } from "@/features/home/HeroSlider";
+import { HeroSlider } from "@/features/home/HeroSlider";
+import { PersonalizedRecCta } from "@/features/home/PersonalizedRecCta";
 import { RecentTasteResumeCard } from "@/features/home/RecentTasteResumeCard";
 // import { LifetimeWebtoonsSection } from "@/features/lifetime/LifetimeWebtoonsSection";
 import { WeekendPicksSection } from "@/features/weekend-picks/WeekendPicksSection";
 import { WeekendPicksOpenButton } from "@/features/weekend-picks/WeekendPicksOpenButton";
 import { ToonaLogo } from "@/components/brand/ToonaLogo";
 import { ToonaInstagramLink } from "@/components/brand/ToonaInstagramLink";
+import { getVisitorType } from "@/lib/session";
 import Link from "next/link";
 import { RotateCcw, Search } from "lucide-react";
 
 function MobileHomeHeader() {
+  const [showRetaste, setShowRetaste] = useState(false);
+
+  useEffect(() => {
+    setShowRetaste(getVisitorType() === "returning");
+  }, []);
+
   return (
     <header className="sticky top-0 z-30 -mx-4 mb-1 flex items-center justify-between bg-background/90 px-4 py-3 backdrop-blur-md md:hidden">
       <Link href="/home" aria-label="Toona 홈">
@@ -30,13 +38,15 @@ function MobileHomeHeader() {
         >
           <Search className="h-5 w-5" />
         </Link>
-        <Link
-          href="/onboarding"
-          aria-label="취향 다시 설정"
-          className="flex h-11 w-11 items-center justify-center rounded-xl bg-card text-muted-foreground"
-        >
-          <RotateCcw className="h-5 w-5" />
-        </Link>
+        {showRetaste ? (
+          <Link
+            href="/onboarding"
+            aria-label="취향 다시 설정"
+            className="flex h-11 w-11 items-center justify-center rounded-xl bg-card text-muted-foreground"
+          >
+            <RotateCcw className="h-5 w-5" />
+          </Link>
+        ) : null}
         <ToonaInstagramLink className="flex h-11 w-11 rounded-xl bg-card" />
       </div>
     </header>
@@ -66,7 +76,8 @@ export function ToonaHome({ hero, rails }: HomeBundle) {
       <DesktopContent>
         <MobileHomeHeader />
 
-        {hero ? <HeroSlider hero={hero} /> : <FallbackHero />}
+        {hero ? <HeroSlider hero={hero} /> : <PersonalizedRecCta className="mt-3" />}
+        {hero ? <PersonalizedRecCta compact /> : null}
 
         {picksAvailable ? (
           <WeekendPicksOpenButton
@@ -121,15 +132,7 @@ export function ToonaHome({ hero, rails }: HomeBundle) {
           )}
         </div>
 
-        <div className="mt-10 hidden md:block">
-          <Link
-            href="/onboarding"
-            className="inline-flex items-center gap-2 text-[13px] text-muted-foreground hover:text-foreground"
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-            취향 다시 설정
-          </Link>
-        </div>
+        <ReturningDesktopRetaste />
       </DesktopContent>
 
       <WeekendPicksSection
@@ -137,6 +140,25 @@ export function ToonaHome({ hero, rails }: HomeBundle) {
         onAvailableChange={setPicksAvailable}
         onPersonalize={() => router.push("/onboarding")}
       />
+    </div>
+  );
+}
+
+function ReturningDesktopRetaste() {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    setShow(getVisitorType() === "returning");
+  }, []);
+  if (!show) return null;
+  return (
+    <div className="mt-10 hidden md:block">
+      <Link
+        href="/onboarding"
+        className="inline-flex items-center gap-2 text-[13px] text-muted-foreground hover:text-foreground"
+      >
+        <RotateCcw className="h-3.5 w-3.5" />
+        취향 다시 설정
+      </Link>
     </div>
   );
 }

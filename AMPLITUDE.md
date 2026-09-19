@@ -1,6 +1,6 @@
 # TOONA Amplitude 이벤트
 
-유입 Hook · 추천 전환 · Weekend Picks 실험을 보기 위한 클라이언트 이벤트입니다.
+유입 Hook · 추천 전환 · Weekend Picks를 보기 위한 클라이언트 이벤트입니다.
 
 구현: `lib/analytics.ts` · SDK: `@amplitude/analytics-browser` · init: `components/analytics/AmplitudeInit.tsx`
 
@@ -26,8 +26,12 @@
 | `worldcup_view` | 월드컵 첫 대결 UI 표시 | JS 세션 1회 |
 | `worldcup_completed` | 월드컵 winner 확정 | winner id당 1회 |
 | `recommendation_viewed` | 추천 결과 정상 표시 | sourceWebtoonId + source 1회 |
+| `best_recommendation_read_click` | BEST 「정주행 시작하기」 | 클릭마다 |
+| `alternative_recommendation_read_click` | 「다른 선택지」 웹툰 CTA | 클릭마다 |
 | `home_view` | 홈 정상 표시 | JS 세션 1회 |
-| `webtoon_clicked` | 네이버 공식 작품 열기 | 클릭마다 |
+| `personalized_recommendation_cta_click` | 홈 「내 취향 웹툰 3개 추천받기」 | 클릭마다 |
+| `webtoon_clicked` | 공식 작품 열기 (네이버·카카오) | 클릭마다 |
+| `weekend_picks_button_click` | 「🔥 이번 주말, 투나가 골라줘」 | 클릭마다 |
 | `weekend_picks_view` | Weekend Picks 모달이 열림 | weekKey당 1회 |
 | `weekend_pick_impression` | 픽 카드가 화면에 보임 | weekKey + 작품당 1회 |
 | `weekend_review_open` | 「리뷰로 찍먹」 | 클릭마다 |
@@ -36,9 +40,6 @@
 | `weekend_direct_read_click` | 카드 「바로 보러가기」 | 클릭마다 |
 | `weekend_review_read_click` | 리뷰에서 웹툰 CTA | 클릭마다 |
 | `weekend_personalize_click` | 「내 취향으로 추천받기」 | 클릭마다 |
-| `weekend_picks_button_click` | 「이번 주말, 투나가 골라줘」 | 클릭마다 |
-| `best_recommendation_read_click` | BEST 「정주행 시작하기」 | 클릭마다 |
-| `alternative_recommendation_read_click` | 다른 선택지 웹툰 CTA | 클릭마다 |
 
 JS 세션 = 탭을 새로고침하기 전까지의 in-memory `sendOnce`. Amplitude User Session과 다릅니다.
 
@@ -80,6 +81,30 @@ JS 세션 = 탭을 새로고침하기 전까지의 in-memory `sendOnce`. Amplitu
 
 `source=worldcup`은 분석 플로우 query `source=world-cup`일 때만입니다. 공유 진입(`share`)도 Amplitude에는 `"direct"`로 집계됩니다.
 
+결과 UI는 BEST 1장 + 「다른 선택지」 최대 2장입니다. 이 이벤트는 화면이 뜬 시점에 가고, 작품 클릭은 아래 read 이벤트입니다.
+
+### `best_recommendation_read_click`
+
+| | |
+|--|--|
+| 의미 | BEST 카드 「정주행 시작하기」 |
+| 시점 | `BestRecommendationCard` CTA |
+| Properties | `webtoonId`, `title`, `episodeCount`, `serializationStatus`, `platform` |
+| 중복 | 클릭마다 |
+
+네이버면 이어서 `webtoon_clicked`(source=`personalized_recommendation`)도 갑니다. 카카오 `/viewer`도 같은 이벤트가 갑니다 (`platform=kakao`).
+
+### `alternative_recommendation_read_click`
+
+| | |
+|--|--|
+| 의미 | 「다른 선택지」 카드에서 웹툰을 염 |
+| 시점 | `AlternativeRecommendationCard` CTA |
+| Properties | `webtoonId`, `title`, `episodeCount`, `serializationStatus`, `platform` |
+| 중복 | 클릭마다 |
+
+`platform`은 소문자입니다. `episodeCount` / `serializationStatus`는 값이 있을 때만 붙습니다.
+
 ---
 
 ## 월드컵
@@ -102,6 +127,8 @@ JS 세션 = 탭을 새로고침하기 전까지의 in-memory `sendOnce`. Amplitu
 | Properties | `winnerWebtoonId`, `winnerTitle` |
 | 중복 | winner id 기준 1회 |
 
+홈의 월드컵 CTA는 현재 비활성입니다. `/world-cup`으로 직접 들어가면 이벤트는 그대로 갑니다.
+
 ---
 
 ## 홈
@@ -112,10 +139,21 @@ JS 세션 = 탭을 새로고침하기 전까지의 in-memory `sendOnce`. Amplitu
 |--|--|
 | 의미 | TOONA 홈이 정상 표시됨 |
 | 시점 | `/home` `HomeClient` `status === success` |
-| Properties | 없음 |
+| Properties | `visitor_type` (`new` \| `returning`) |
 | 중복 | JS 세션당 1회 |
 
-로딩·에러 화면에서는 보내지 않습니다.
+`visitor_type=returning`은 `toona_onboarding_completed` 또는 favorite id가 있을 때. 그 외는 `new`. 별도 사용자 식별은 없습니다.
+
+로딩·에러 화면에서는 보내지 않습니다. `/`는 `/home`으로 redirect 하므로 첫 방문도 이 이벤트가 갑니다.
+
+### `personalized_recommendation_cta_click`
+
+| | |
+|--|--|
+| 의미 | 홈에서 개인화 추천 CTA를 누름 |
+| 시점 | `PersonalizedRecCta` → `/onboarding` |
+| Properties | `visitor_type` (`new` \| `returning`) |
+| 중복 | 클릭마다 |
 
 ---
 
@@ -125,12 +163,13 @@ JS 세션 = 탭을 새로고침하기 전까지의 in-memory `sendOnce`. Amplitu
 
 | | |
 |--|--|
-| 의미 | 네이버 공식 URL / 앱 브릿지로 작품을 염 |
-| 시점 | `openNaverUrl` (`openWebtoon` NAVER, `openNaverOfficial`) |
-| Properties | `platform` (`naver`), `openTarget` (`app_bridge` \| `web_fallback`), `webtoonId`, `naverTitleId` |
+| 의미 | 공식 플랫폼으로 작품을 염 (네이버 앱/웹, 카카오 `/viewer`) |
+| 시점 | `openWebtoon` / `openNaverOfficial` |
+| Properties | `platform` (`naver` \| `kakao`), `openTarget` (`app_bridge` \| `web_fallback` \| `web`), `webtoonId`, `naverTitleId`, `source` |
+| `source` | `"home"` \| `"personalized_recommendation"` (라우트에서 추론, 그 외 페이지는 생략) |
 | 중복 | 클릭마다 |
 
-카카오 iframe(`/viewer`)·알 수 없는 플랫폼 외부 링크는 **이 이벤트를 보내지 않습니다.**  
+이벤트 이름은 그대로입니다. `source`만 추가했습니다. 카카오 `/viewer`도 `platform=kakao`, `openTarget=web`으로 갑니다.  
 Weekend Picks 「바로 보러가기」는 아래 `weekend_*_read_click`를 씁니다. 네이버 카드가 `<a>`로 바로 나가면 `webtoon_clicked`는 안 붙습니다.
 
 백엔드 `POST` `actionType=CLICKED`와는 별개입니다.
@@ -139,9 +178,9 @@ Weekend Picks 「바로 보러가기」는 아래 `weekend_*_read_click`를 씁�
 
 ## Weekend Picks
 
-온보딩 검색·홈 모두 같은 모달입니다. 데이터가 없거나 실패하면 모달·이벤트 모두 없습니다.
+온보딩 검색·홈 모두 같은 모달입니다. `GET /content/weekend-picks`의 `items`가 비어 있거나 실패하면 버튼·모달·이벤트 모두 없습니다.
 
-첫 방문은 `localStorage` `toona_weekend_picks_seen`이 없을 때 자동으로 열립니다. 재방문은 홈/온보딩의 「이번 주말 투나 PICK 보기」로 다시 엽니다.
+**자동 오픈은 없습니다.** 온보딩/홈의 「🔥 이번 주말, 투나가 골라줘」를 눌렀을 때만 모달이 열립니다.
 
 ### 공통 properties
 
@@ -158,11 +197,22 @@ Weekend Picks 「바로 보러가기」는 아래 `weekend_*_read_click`를 씁�
 리뷰 이벤트 추가: `videoId`, `videoType` (`shorts` \| `review`)  
 읽기 이벤트 추가: `platform` (소문자, 없으면 `unknown`), `openTarget` (`app_bridge` \| `web`)
 
+API의 `requestedWeekKey` / `isFallback`은 운영용이며 Amplitude로 보내지 않습니다. 사용자에게 「지난주 추천」 경고도 없습니다.
+
+### `weekend_picks_button_click`
+
+| | |
+|--|--|
+| 의미 | 「🔥 이번 주말, 투나가 골라줘」 |
+| 시점 | 버튼 클릭 → `WeekendPicksSection`이 모달을 열 때 |
+| Properties | `weekKey` |
+| 중복 | 클릭마다 |
+
 ### `weekend_picks_view`
 
 | | |
 |--|--|
-| 의미 | 추천 모달이 실제로 열림 (버튼 클릭) |
+| 의미 | 추천 모달이 실제로 열림 |
 | 시점 | `WeekendPicksSection` `open === true` 이고 아이템이 있을 때 |
 | Properties | `weekKey`, `pickCount` |
 | 중복 | `weekKey`당 JS 세션 1회 |
@@ -229,25 +279,6 @@ Weekend Picks 「바로 보러가기」는 아래 `weekend_*_read_click`를 씁�
 
 온보딩에서는 검색 포커스, 홈에서는 `/onboarding`으로 이동합니다.
 
-### `weekend_picks_button_click`
-
-| | |
-|--|--|
-| 의미 | 「🔥 이번 주말, 투나가 골라줘」 |
-| 시점 | 온보딩/홈 버튼 클릭 → 모달 오픈 |
-| Properties | `weekKey` |
-
-첫 방문 자동 오픈은 없습니다.
-
-### `best_recommendation_read_click` / `alternative_recommendation_read_click`
-
-| | |
-|--|--|
-| 의미 | 추천 결과에서 작품 열기 |
-| Properties | `webtoonId`, `title`, `episodeCount`, `serializationStatus`, `platform` |
-
-`recommendation_viewed`는 그대로 유지합니다. `webtoon_clicked`도 네이버 공식 오픈 시 그대로 갑니다.
-
 ---
 
 ## 현재 보내지 않음
@@ -264,19 +295,28 @@ Weekend Picks 「바로 보러가기」는 아래 `weekend_*_read_click`를 씁�
 - `track()` CustomEvent (`world_cup_*`, `shared_recommendation_*`, `recent_recommendation_*` 등)
 - 인스타그램 아이콘 클릭
 - 추천 결과 「더 많은 웹툰 추천 받기」 / 「홈으로」 자체 클릭
-- 카카오 `/viewer` 진입
 
 ---
 
 ## Funnel (Amplitude에서 생성)
 
-### Funnel A — Direct 추천 → 홈
+### Funnel A — Direct 추천 → 읽기 / 홈 (opt-in)
 
 ```
-page_view
+home_view
+  → personalized_recommendation_cta_click
+  → page_view
   → webtoon_selected
   → recommendation_viewed   (filter: source = direct)
+  → webtoon_clicked         (filter: source = personalized_recommendation)
   → home_view
+```
+
+### Funnel A2 — 홈에서 바로 읽기 (실험 핵심)
+
+```
+home_view
+  → webtoon_clicked   (filter: source = home)
 ```
 
 ### Funnel B — 월드컵 → 추천 → 홈
@@ -291,8 +331,19 @@ worldcup_view
 ### Funnel C — Weekend Picks
 
 ```
-weekend_picks_button_click → weekend_picks_view → weekend_direct_read_click
-weekend_picks_button_click → weekend_picks_view → weekend_review_open → weekend_review_read_click
+weekend_picks_button_click
+  → weekend_picks_view
+  → weekend_direct_read_click
+
+weekend_picks_button_click
+  → weekend_picks_view
+  → weekend_review_open
+  → weekend_review_play
+  → weekend_review_read_click
+
+weekend_picks_button_click
+  → weekend_picks_view
+  → weekend_personalize_click
 ```
 
 온보딩에서 픽을 본 뒤 `weekend_personalize_click` → `webtoon_selected` → Funnel A로 이어질 수 있습니다.
@@ -307,10 +358,11 @@ weekend_picks_button_click → weekend_picks_view → weekend_review_open → we
 | `webtoon_selected` | `lib/taste-flow.ts` |
 | `worldcup_view` / `worldcup_completed` | `features/world-cup/components/WorldCupScreen.tsx` |
 | `recommendation_viewed` | `features/onboarding/components/ResultScreen.tsx` |
-| `home_view` | `features/home/HomeClient.tsx` |
-| `webtoon_clicked` | `lib/open-webtoon.ts` (`openNaverUrl`) |
-| `weekend_picks_view` / `weekend_picks_button_click` / `weekend_review_open` / `weekend_personalize_click` | `features/weekend-picks/WeekendPicksSection.tsx` |
 | `best_recommendation_read_click` / `alternative_recommendation_read_click` | `features/recommendations/BestFirstResult.tsx` |
+| `home_view` | `features/home/HomeClient.tsx` |
+| `personalized_recommendation_cta_click` | `features/home/PersonalizedRecCta.tsx` |
+| `webtoon_clicked` | `lib/open-webtoon.ts` (`openWebtoon` / `openNaverUrl`) |
+| `weekend_picks_button_click` / `weekend_picks_view` / `weekend_review_open` / `weekend_personalize_click` | `features/weekend-picks/WeekendPicksSection.tsx` |
 | `weekend_pick_impression` / `weekend_direct_read_click` | `features/weekend-picks/WeekendPickCard.tsx` |
 | `weekend_review_play` / `weekend_review_read_click` | `features/weekend-picks/WeekendReviewSheet.tsx` |
 | `weekend_review_close` | `WeekendPicksSection` (embedded) · `WeekendReviewSheet` (standalone) |
@@ -322,4 +374,4 @@ weekend_picks_button_click → weekend_picks_view → weekend_review_open → we
 
 - React Strict Mode 중복을 막기 위해 view 계열은 `sendOnce`를 씁니다.
 - `sendOnce`는 새로고침하면 초기화됩니다. 같은 `weekKey`라도 재방문 새로고침 후 모달을 다시 열면 `weekend_picks_view`가 한 번 더 갑니다.
-- 기존 `track()`은 콘솔/CustomEvent 전용입니다.
+- 기존 `track()`은 CustomEvent 전용입니다.

@@ -64,7 +64,7 @@ http://localhost:3000
 4. **홈**: `heroSlides` 슬라이더 + 오늘 인기 + 판타지/액션/무협/로맨스/완결
 5. **공식 플랫폼 이동**: `officialUrl` 오픈 + `POST /api/webtoon-actions` (`CLICKED`)
 
-재방문: `toona_onboarding_completed=true` + favorite id → `/home`
+첫 방문·재방문 모두 `/` → `/home`. 개인화 추천은 홈 CTA에서 opt-in (`/onboarding`).
 
 ## 추천 결과 공유
 
