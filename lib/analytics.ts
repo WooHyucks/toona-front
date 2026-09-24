@@ -159,18 +159,8 @@ export function trackRecommendationViewed(input: {
 }
 
 /** 6. TOONA home successfully shown */
-export function trackHomeView(input?: { visitorType?: "new" | "returning" }) {
-  sendOnce("home_view", "home_view", {
-    visitor_type: input?.visitorType,
-  });
-}
-
-export function trackPersonalizedRecommendationCtaClick(input?: {
-  visitorType?: "new" | "returning";
-}) {
-  send("personalized_recommendation_cta_click", {
-    visitor_type: input?.visitorType,
-  });
+export function trackHomeView() {
+  sendOnce("home_view", "home_view");
 }
 
 /** Unused: recommendation CTA no longer creates a lifetime collection. */
@@ -186,36 +176,18 @@ export function trackLifetimeWebtoonAdded(webtoonId: string, title: string) {
   send("lifetime_webtoon_added", { webtoonId, title });
 }
 
-export type WebtoonClickSource = "home" | "personalized_recommendation";
-
-/** Infer read context from the current route. Additive — does not rename events. */
-export function inferWebtoonClickSource(): WebtoonClickSource | undefined {
-  if (typeof window === "undefined") return undefined;
-  const path = window.location.pathname;
-  if (
-    path.startsWith("/recommendations") ||
-    path.startsWith("/onboarding/result")
-  ) {
-    return "personalized_recommendation";
-  }
-  if (path === "/" || path.startsWith("/home")) return "home";
-  return undefined;
-}
-
 /** Official-platform open (CLICKED API is separate and unchanged) */
 export function trackWebtoonClicked(properties: {
-  platform: "naver" | "kakao";
-  openTarget: "app_bridge" | "web_fallback" | "web";
+  platform: "naver";
+  openTarget: "app_bridge" | "web_fallback";
   webtoonId: string;
   naverTitleId?: string | null;
-  source?: WebtoonClickSource;
 }) {
   const props = {
     platform: properties.platform,
     openTarget: properties.openTarget,
     webtoonId: properties.webtoonId,
     naverTitleId: properties.naverTitleId ?? undefined,
-    source: properties.source ?? inferWebtoonClickSource(),
   };
   track("webtoon_clicked", props);
   send("webtoon_clicked", props);
@@ -232,7 +204,7 @@ type WeekendPickBase = {
   weekKey: string;
 };
 
-/** Weekend Picks modal actually opened (button click only) */
+/** Weekend Picks modal actually opened (auto or reopen) */
 export function trackWeekendPicksView(weekKey: string, pickCount: number) {
   sendOnce(`weekend_picks_view:${weekKey}`, "weekend_picks_view", {
     weekKey,

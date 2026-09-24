@@ -5,7 +5,7 @@ import { ToonaHome } from "@/features/home/HomeScreen";
 import { HomePageSkeleton } from "@/features/rankings/components/RankingRailSkeleton";
 import { ErrorState } from "@/components/common/ErrorState";
 import { getHomeBundle, type HomeBundle } from "@/lib/api/home";
-import { getFavoriteWebtoonId, getVisitorType } from "@/lib/session";
+import { getFavoriteWebtoonId } from "@/lib/session";
 import { trackHomeView } from "@/lib/analytics";
 
 export function HomeClient() {
@@ -33,7 +33,7 @@ export function HomeClient() {
 
   useEffect(() => {
     if (status !== "success") return;
-    trackHomeView({ visitorType: getVisitorType() });
+    trackHomeView();
   }, [status]);
 
   if (status === "loading") return <HomePageSkeleton />;

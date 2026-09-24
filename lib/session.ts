@@ -66,14 +66,6 @@ export function setFavoriteWebtoon(id: string, title?: string) {
   if (title) localStorage.setItem(FAVORITE_TITLE_KEY, title);
 }
 
-/** localStorage only — no new identity. Used for home_view visitor_type. */
-export function getVisitorType(): "new" | "returning" {
-  if (isOnboardingCompleted() || Boolean(getFavoriteWebtoonId())) {
-    return "returning";
-  }
-  return "new";
-}
-
 export function isOnboardingCompleted(): boolean {
   if (typeof window === "undefined") return false;
   migrateLegacy();
