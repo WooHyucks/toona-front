@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { fetchWebtoonDetail } from "@/lib/api/webtoons";
 import { AnimatePresence, motion } from "framer-motion";
 import { ExternalLink, Sparkles, X } from "lucide-react";
 import { WebtoonCover } from "@/features/webtoons/components/WebtoonCover";
@@ -31,6 +32,26 @@ type WebtoonBottomSheetProps = {
 export function WebtoonBottomSheet({ webtoon, onClose }: WebtoonBottomSheetProps) {
   const router = useRouter();
   const isMobile = useIsMobile();
+  const [synopsis, setSynopsis] = useState(webtoon?.description ?? null);
+
+  useEffect(() => {
+    if (!webtoon) return;
+    setSynopsis(webtoon.description ?? null);
+    if (webtoon.description) return;
+
+    let cancelled = false;
+    fetchWebtoonDetail(webtoon.id)
+      .then((detail) => {
+        if (cancelled) return;
+        setSynopsis(detail.synopsis ?? null);
+      })
+      .catch(() => {
+        /* keep sheet usable without plot */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [webtoon]);
 
   useEffect(() => {
     if (!webtoon) return;
@@ -85,7 +106,7 @@ export function WebtoonBottomSheet({ webtoon, onClose }: WebtoonBottomSheetProps
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        aria-describedby={webtoon.description ? descId : undefined}
+        aria-describedby={synopsis ? descId : undefined}
       >
         <div
           className="absolute inset-0 bg-black/70 backdrop-blur-sm"
@@ -169,15 +190,18 @@ export function WebtoonBottomSheet({ webtoon, onClose }: WebtoonBottomSheetProps
               </div>
             </div>
 
-            {webtoon.description ? (
+            {synopsis ? (
               <>
                 <div className="h-px bg-border" />
                 <div className="px-4 py-4 sm:px-5">
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    줄거리
+                  </p>
                   <p
                     id={descId}
                     className="text-[13px] leading-[1.7] text-muted-foreground sm:text-[14px]"
                   >
-                    {webtoon.description}
+                    {synopsis}
                   </p>
                 </div>
               </>

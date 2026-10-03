@@ -52,6 +52,8 @@ export interface WebtoonListItem {
   latestEpisodeNumber: number | null;
   totalEpisodeCount: number | null;
   recommendationReady: boolean;
+  /** Present on some payloads (detail-shaped list items). List endpoints omit it. */
+  synopsis?: string | null;
 }
 
 export interface Pagination {

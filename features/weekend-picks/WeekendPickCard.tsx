@@ -215,6 +215,11 @@ export function WeekendPickCard({
             {item.reason}
           </p>
         ) : null}
+        {item.webtoon.synopsis ? (
+          <p className="mt-1.5 line-clamp-3 text-[12px] leading-relaxed text-muted-foreground/90">
+            {item.webtoon.synopsis}
+          </p>
+        ) : null}
         {actions}
       </div>
     </article>

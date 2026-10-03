@@ -44,7 +44,7 @@ export function mapListItemToWebtoon(item: WebtoonListItem): Webtoon {
     primaryGenre: genres[0] ?? null,
     genres,
     sourceTags: [],
-    description: null,
+    description: item.synopsis ?? null,
     status: toUiStatus(item.status),
     scrapedAt: "",
     latestEpisodeNumber: item.latestEpisodeNumber ?? null,

@@ -184,6 +184,11 @@ export function WeekendReviewSheet({
         <h3 className="pt-1.5 text-[18px] font-semibold leading-snug tracking-tight text-foreground">
           {item.webtoon.title}
         </h3>
+        {item.webtoon.synopsis ? (
+          <p className="mt-2 line-clamp-4 text-[13px] leading-relaxed text-muted-foreground">
+            {item.webtoon.synopsis}
+          </p>
+        ) : null}
       </div>
 
       <div className="flex flex-col justify-center px-5 pb-3 md:px-8">
