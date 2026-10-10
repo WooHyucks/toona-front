@@ -303,3 +303,257 @@ export function trackAlternativeRecommendationReadClick(props: RecReadProps) {
 export function trackWeekendPicksButtonClick(weekKey?: string) {
   send("weekend_picks_button_click", { weekKey: weekKey || undefined });
 }
+
+type FindBase = {
+  session_id?: string;
+  turn_number?: number;
+};
+
+export function trackFindPageView() {
+  sendOnce("find_page_view", "find_page_view");
+}
+
+/** MVP: Find page entered (once per JS session). */
+export function trackFindViewed() {
+  sendOnce("find_viewed", "find_viewed");
+}
+
+export function trackFindStarted(
+  props: FindBase & { input_length?: number; memory_length?: number }
+) {
+  send("find_started", {
+    ...props,
+    memory_length: props.memory_length ?? props.input_length,
+    attempt: 1,
+  });
+}
+
+export function trackFindCandidatesShown(
+  props: FindBase & {
+    candidate_count: number;
+    verified_count?: number;
+    thumbnail_count?: number;
+    official_url_count?: number;
+  }
+) {
+  send("find_candidates_shown", props);
+}
+
+export function trackFindCandidateRejected(
+  props: FindBase & { candidate_count: number }
+) {
+  send("find_candidate_rejected", props);
+}
+
+export function trackFindAllCandidatesRejected(
+  props: FindBase & { candidate_count: number }
+) {
+  send("find_all_candidates_rejected", props);
+}
+
+export function trackFindRefined(
+  props: FindBase & { attempt?: number; memory_length?: number }
+) {
+  send("find_refined", props);
+}
+
+export function trackFindNeedMoreInfo(
+  props: FindBase & { attempt?: number }
+) {
+  send("find_need_more_info", props);
+}
+
+/** MVP: NEED_MORE_INFO UI shown (deduped per session + attempt). */
+export function trackFindNeedMoreInfoShown(
+  props: FindBase & { attempt: number }
+) {
+  sendOnce(
+    `find_need_more_info_shown:${props.session_id ?? ""}:${props.attempt}`,
+    "find_need_more_info_shown",
+    { attempt: props.attempt, session_id: props.session_id }
+  );
+}
+
+/** MVP: candidate / similar result UI shown (deduped per session + attempt + type). */
+export function trackFindResultShown(props: {
+  result_type: "candidate" | "similar";
+  result_count: number;
+  attempt: number;
+  session_id?: string;
+}) {
+  sendOnce(
+    `find_result_shown:${props.session_id ?? ""}:${props.attempt}:${props.result_type}`,
+    "find_result_shown",
+    {
+      result_type: props.result_type,
+      result_count: props.result_count,
+      attempt: props.attempt,
+      session_id: props.session_id,
+    }
+  );
+}
+
+/** MVP: core result CTA — confirm or official link. */
+export function trackFindResultClicked(props: {
+  action: "confirmed" | "official_clicked";
+  result_type: "candidate" | "similar";
+  title?: string | null;
+  platform?: string | null;
+  attempt: number;
+  session_id?: string;
+}) {
+  send("find_result_clicked", {
+    action: props.action,
+    result_type: props.result_type,
+    title: props.title ?? undefined,
+    platform: props.platform ?? undefined,
+    attempt: props.attempt,
+    session_id: props.session_id,
+  });
+}
+
+/** MVP: Find API failure (no raw messages). */
+export function trackFindError(props: {
+  attempt: number;
+  error_type: string;
+  session_id?: string;
+}) {
+  send("find_error", {
+    attempt: props.attempt,
+    error_type: props.error_type,
+    session_id: props.session_id,
+  });
+}
+
+export function trackFindSimilarShown(
+  props: FindBase & {
+    attempt?: number;
+    similar_count: number;
+    verified_count?: number;
+    thumbnail_count?: number;
+    official_url_count?: number;
+  }
+) {
+  send("find_similar_shown", props);
+}
+
+export function trackFindSimilarClicked(
+  props: FindBase & {
+    title?: string;
+    platform?: string | null;
+    position?: number;
+    attempt?: number;
+  }
+) {
+  send("find_similar_clicked", {
+    session_id: props.session_id,
+    turn_number: props.turn_number,
+    attempt: props.attempt,
+    title: props.title,
+    platform: props.platform ?? undefined,
+    position: props.position,
+  });
+}
+
+export function trackFindContinueAfterSimilar(
+  props: FindBase & { attempt?: number }
+) {
+  send("find_continue_after_similar", props);
+}
+
+export function trackFindConfirmed(
+  props: FindBase & {
+    platform?: string | null;
+    webtoon_title?: string;
+    verified?: boolean;
+  }
+) {
+  const payload = {
+    session_id: props.session_id,
+    turn_number: props.turn_number,
+    platform: props.platform ?? undefined,
+    webtoon_title: props.webtoon_title,
+    title: props.webtoon_title,
+    verified: props.verified,
+  };
+  send("find_confirmed", payload);
+  send("find_candidate_confirmed", payload);
+}
+
+export function trackFindOfficialClicked(
+  props: FindBase & { platform?: string | null; webtoon_title?: string }
+) {
+  send("find_official_clicked", {
+    session_id: props.session_id,
+    turn_number: props.turn_number,
+    platform: props.platform ?? undefined,
+    webtoon_title: props.webtoon_title,
+    title: props.webtoon_title,
+  });
+}
+
+export function trackFindRecommendationClicked(
+  props: FindBase & { source?: string }
+) {
+  send("find_recommendation_clicked", props);
+  send("find_recommendation_cta_clicked", {
+    ...props,
+    source: props.source ?? "find_success",
+  });
+}
+
+export function trackFindToonapickCtaClicked(
+  props: FindBase & {
+    source?: string;
+    find_status?: string;
+    attempt?: number;
+  }
+) {
+  send("find_toonapick_cta_clicked", {
+    source: props.source ?? "find",
+    find_status: props.find_status,
+    attempt: props.attempt,
+    session_id: props.session_id,
+    turn_number: props.turn_number,
+  });
+}
+
+export function trackFindToonapickShown(
+  props: FindBase & {
+    source?: string;
+    find_status?: string;
+    attempt?: number;
+    pick_count?: number;
+  }
+) {
+  send("find_toonapick_shown", {
+    source: props.source ?? "find",
+    find_status: props.find_status,
+    attempt: props.attempt,
+    session_id: props.session_id,
+    turn_number: props.turn_number,
+    pick_count: props.pick_count,
+  });
+}
+
+export function trackFindToonapickClicked(
+  props: FindBase & {
+    source?: string;
+    find_status?: string;
+    attempt?: number;
+    title?: string;
+    platform?: string | null;
+    position?: number;
+  }
+) {
+  send("find_toonapick_clicked", {
+    source: props.source ?? "find",
+    find_status: props.find_status,
+    attempt: props.attempt,
+    session_id: props.session_id,
+    turn_number: props.turn_number,
+    title: props.title,
+    platform: props.platform ?? undefined,
+    position: props.position,
+  });
+}

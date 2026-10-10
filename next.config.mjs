@@ -26,6 +26,21 @@ const nextConfig = {
         hostname: "page.kakaocdn.net",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "shared-comic.pstatic.net",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "cdntoin.lezhin.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "img.ridicdn.net",
+        pathname: "/**",
+      },
     ],
   },
   async rewrites() {
@@ -77,6 +92,8 @@ const nextConfig = {
         source: "/api/world-cup/:path*",
         destination: `${LOCAL_API_BASE}/api/world-cup/:path*`,
       },
+      // /api/find/* is handled by app/api/find/[...path]/route.ts
+      // (rewrite proxy times out around 30s; Find needs longer for OpenAI).
     ];
   },
 };

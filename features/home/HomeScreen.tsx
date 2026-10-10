@@ -82,6 +82,23 @@ export function ToonaHome({ hero, rails }: HomeBundle) {
 
         <RecentTasteResumeCard browseAnchorId="home-browse" />
 
+        <Link
+          href="/find"
+          className="mt-4 flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5 transition-colors hover:bg-elevated"
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+            <Search className="h-4 w-4" aria-hidden />
+          </span>
+          <span className="min-w-0 flex-1 text-left">
+            <span className="block text-[14px] font-semibold text-foreground">
+              그 웹툰 뭐였지?
+            </span>
+            <span className="mt-0.5 block text-[12px] text-muted-foreground">
+              제목이 생각 안 나면 기억나는 내용만으로 찾아드려요
+            </span>
+          </span>
+        </Link>
+
         {/* 웹툰 이상형 월드컵 — 일시 비노출
         <Link
           href="/world-cup?mode=replay"

@@ -39,6 +39,27 @@
 | `weekend_picks_button_click` | 「이번 주말, 투나가 골라줘」 | 클릭마다 |
 | `best_recommendation_read_click` | BEST 「정주행 시작하기」 | 클릭마다 |
 | `alternative_recommendation_read_click` | 다른 선택지 웹툰 CTA | 클릭마다 |
+| `find_viewed` | Find 페이지 진입 (MVP) | JS 세션 1회 |
+| `find_page_view` | 웹툰 찾기 화면 표시 (legacy) | JS 세션 1회 |
+| `find_started` | 첫 Find 요청 성공 (MVP: `memory_length`) | 클릭마다 |
+| `find_result_shown` | candidate/similar 결과 UI 표시 (MVP) | session+attempt+type 1회 |
+| `find_result_clicked` | 이거 맞아요 / 웹툰 보러가기 (MVP) | 클릭마다 |
+| `find_need_more_info_shown` | NEED_MORE UI 표시 (MVP) | session+attempt 1회 |
+| `find_error` | Find API 실패 (MVP) | 실패마다 |
+| `find_candidates_shown` | 후보 1~3개 표시 | 응답마다 |
+| `find_candidate_rejected` | 거절 ID를 넣어 재탐색 | 요청마다 |
+| `find_all_candidates_rejected` | 「전부 아니에요」 | 클릭마다 |
+| `find_refined` | NEED_MORE 후 「다시 찾아보기」 성공 (MVP: `attempt`, `memory_length`) | 요청마다 |
+| `find_need_more_info` | NEED_MORE_INFO 화면 (legacy) | 응답마다 |
+| `find_similar_shown` | SIMILAR 유사작 화면 | 응답마다 |
+| `find_similar_clicked` | 유사작 공식 링크 클릭 | 클릭마다 |
+| `find_continue_after_similar` | SIMILAR 후 추가 기억 입력 | 클릭마다 |
+| `find_confirmed` / `find_candidate_confirmed` | 후보 확정 → FOUND | 클릭마다 |
+| `find_official_clicked` | 공식 플랫폼 링크 클릭 | 클릭마다 |
+| `find_toonapick_cta_clicked` | 「오늘의 투나픽 보기」 | 클릭마다 |
+| `find_toonapick_shown` | Find 투나픽 Bottom Sheet | 시트 열림마다 |
+| `find_toonapick_clicked` | 투나픽 「이 웹툰 보러가기」 | 클릭마다 |
+| `find_recommendation_clicked` / `find_recommendation_cta_clicked` | (legacy) FOUND 추천 CTA | 클릭마다 |
 
 JS 세션 = 탭을 새로고침하기 전까지의 in-memory `sendOnce`. Amplitude User Session과 다릅니다.
 
@@ -131,7 +152,7 @@ JS 세션 = 탭을 새로고침하기 전까지의 in-memory `sendOnce`. Amplitu
 | 중복 | 클릭마다 |
 
 카카오 iframe(`/viewer`)·알 수 없는 플랫폼 외부 링크는 **이 이벤트를 보내지 않습니다.**  
-Weekend Picks 「바로 보러가기」는 아래 `weekend_*_read_click`를 씁니다. 네이버 카드가 `<a>`로 바로 나가면 `webtoon_clicked`는 안 붙습니다.
+Weekend Picks 「바로 러가기」는 아래 `weekend_*_read_click`를 씁니다. 네이버 카드가 `<a>`로 바로 나가면 `webtoon_clicked`는 안 붙습니다.
 
 백엔드 `POST` `actionType=CLICKED`와는 별개입니다.
 
@@ -297,6 +318,29 @@ weekend_picks_button_click → weekend_picks_view → weekend_review_open → we
 
 온보딩에서 픽을 본 뒤 `weekend_personalize_click` → `webtoon_selected` → Funnel A로 이어질 수 있습니다.
 
+### Funnel D — 웹툰 찾기 (TOONA Find)
+
+**MVP (실험용 핵심 funnel)**
+
+```
+find_viewed → find_started → find_result_shown → find_result_clicked
+```
+
+NEED_MORE 경로:
+
+```
+find_started → find_need_more_info_shown → find_refined → find_result_shown → find_result_clicked
+```
+
+Start Rate = `find_started` / `find_viewed`  
+Refinement Rate = `find_refined` / `find_need_more_info_shown`  
+Result Reach = `find_result_shown` / `find_started`  
+Result Action = `find_result_clicked` / `find_result_shown`
+
+사용자 입력 전문은 보내지 않습니다. MVP는 `memory_length`, `attempt`, `result_type`, `result_count`, `action`, `title`, `platform`, `error_type`만 사용합니다.
+
+상세/legacy Find 이벤트(`find_candidates_shown`, `find_toonapick_*` 등)는 계속 전송될 수 있습니다.
+
 ---
 
 ## 코드 위치
@@ -314,6 +358,7 @@ weekend_picks_button_click → weekend_picks_view → weekend_review_open → we
 | `weekend_pick_impression` / `weekend_direct_read_click` | `features/weekend-picks/WeekendPickCard.tsx` |
 | `weekend_review_play` / `weekend_review_read_click` | `features/weekend-picks/WeekendReviewSheet.tsx` |
 | `weekend_review_close` | `WeekendPicksSection` (embedded) · `WeekendReviewSheet` (standalone) |
+| `find_*` (page/start/candidates/similar/toonapick 등) | `features/find/FindScreen.tsx`, `FindToonaPickSheet.tsx` |
 | init | `components/analytics/AmplitudeInit.tsx` (root layout) |
 
 ---

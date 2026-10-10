@@ -11,7 +11,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { fetchWeekendPicks, getWeekendPickItems } from "@/lib/api/weekend-picks";
+import {
+  fetchWeekendPicks,
+  getWeekendPickItems,
+} from "@/lib/api/weekend-picks";
 import {
   trackWeekendPersonalizeClick,
   trackWeekendPicksButtonClick,
@@ -198,14 +201,14 @@ export function WeekendPicksSection({
           "md:data-[state=open]:zoom-in-95",
           "[&>button]:z-30 [&>button]:opacity-100 [&>button]:hover:opacity-100",
           "[&>button]:text-white md:[&>button]:text-foreground",
-          active && "[&>button]:hidden"
+          active && "[&>button]:hidden",
         )}
       >
         <div className="relative flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain md:overflow-hidden">
           <div
             className={cn(
               "flex min-h-full w-full flex-col justify-center md:min-h-0 md:justify-start md:py-0",
-              "px-0 pt-[max(2.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+              "px-0 pt-[max(2.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))]",
             )}
           >
             <DialogHeader className="shrink-0 px-5 pb-4 text-center md:px-6 md:pb-3 md:pt-5 md:pr-12 md:text-left">
@@ -213,7 +216,7 @@ export function WeekendPicksSection({
                 이번 주말 투나 PICK
               </p>
               <DialogTitle className="pt-1 text-[20px] leading-snug tracking-[-0.02em] text-white md:text-[22px] md:text-foreground">
-                이번 주말, 투나가 3개 골라봤어요
+                이번 주말, 투나가 골라봤어요
               </DialogTitle>
               <DialogDescription className="text-[13px] text-white/70 md:text-muted-foreground">
                 지금 시작하면 멈추기 힘든 작품들만 골랐어요.
@@ -255,7 +258,7 @@ export function WeekendPicksSection({
                           "h-1.5 rounded-full transition-all",
                           index === snap
                             ? "w-4 bg-primary"
-                            : "w-1.5 bg-white/30"
+                            : "w-1.5 bg-white/30",
                         )}
                       />
                     ))}
@@ -280,7 +283,7 @@ export function WeekendPicksSection({
 
             <div className="shrink-0 px-5 pt-4 md:border-t md:border-border md:px-6 md:py-4">
               <p className="text-center text-[13px] font-medium text-white/70 md:text-muted-foreground">
-                셋 다 취향이 아니라면?
+                취향이 아니라면?
               </p>
               <button
                 type="button"

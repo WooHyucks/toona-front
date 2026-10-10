@@ -9,6 +9,7 @@ import {
   Home,
   LayoutGrid,
   RotateCcw,
+  ScanSearch,
   Search,
   User,
 } from "lucide-react";
@@ -32,6 +33,7 @@ export const NAV = [
     label: "플랫폼",
   },
   { id: "search", href: "/search", icon: Search, label: "검색" },
+  { id: "find", href: "/find", icon: ScanSearch, label: "웹툰 찾기" },
   { id: "profile", href: "/profile", icon: User, label: "프로필" },
   {
     id: "retaste",
@@ -69,6 +71,7 @@ function isNavActive(
     return pathname === "/home" || pathname.startsWith("/home/");
   }
   if (id === "search") return pathname.startsWith("/search");
+  if (id === "find") return pathname.startsWith("/find");
   if (id === "profile") return pathname.startsWith("/profile");
   if (id === "retaste") return pathname.startsWith("/onboarding");
   if (id === "discover") {

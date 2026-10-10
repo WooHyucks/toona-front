@@ -408,3 +408,79 @@ export interface WeekendPicksResponse {
   items?: WeekendPickItem[];
   picks?: WeekendPickItem[];
 }
+
+/* ─── Find (기억으로 웹툰 찾기) ─────────────────────────────── */
+
+export type FindStatus =
+  | "CANDIDATES"
+  | "NEED_MORE_INFO"
+  | "SIMILAR"
+  | "FOUND";
+
+export type FindMessageRole = "user" | "assistant" | "system";
+
+export interface FindCandidate {
+  id: string;
+  title: string;
+  platform: string | null;
+  officialUrl: string | null;
+  thumbnailUrl?: string | null;
+  verified?: boolean;
+  reason: string;
+}
+
+export interface FindTurnResponse {
+  sessionId: string;
+  status: Exclude<FindStatus, "FOUND">;
+  message: string;
+  candidates: FindCandidate[];
+  similar?: FindCandidate[];
+  followUpQuestion: string | null;
+  attempt?: number;
+}
+
+export interface CreateFindSessionRequest {
+  message: string;
+  guestToken?: string | null;
+}
+
+export interface ContinueFindSessionRequest {
+  message: string;
+  rejectedCandidateIds?: string[];
+}
+
+export interface ConfirmFindCandidateRequest {
+  candidateId: string;
+}
+
+export interface FindConfirmedWebtoon {
+  title: string;
+  platform: string | null;
+  officialUrl: string | null;
+  thumbnailUrl?: string | null;
+  verified?: boolean;
+}
+
+export interface ConfirmFindResponse {
+  status: "FOUND";
+  webtoon: FindConfirmedWebtoon;
+}
+
+export interface FindMessage {
+  id: string;
+  role: FindMessageRole;
+  content: string;
+  createdAt: string;
+}
+
+export interface FindSessionResponse {
+  sessionId: string;
+  status: FindStatus;
+  turnCount: number;
+  attempt?: number;
+  messages: FindMessage[];
+  candidates: FindCandidate[];
+  similar?: FindCandidate[];
+  webtoon: FindConfirmedWebtoon | null;
+  followUpQuestion: string | null;
+}
