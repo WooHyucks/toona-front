@@ -108,6 +108,10 @@ export interface RecommendedWebtoon {
   totalEpisodeCount: number | null;
   episodeCount?: number | null;
   serializationStatus?: SerializationStatus | null;
+  /** Additive — may be null when DB description is empty */
+  synopsis?: string | null;
+  /** Additive batch-generated one-line hook; null when missing */
+  hookPhrase?: string | null;
 }
 
 export interface RecommendationItem {
@@ -132,6 +136,7 @@ export interface RecommendationsResponse {
     title: string;
     platform: Platform | string;
     thumbnailUrl: string | null;
+    synopsis?: string | null;
   };
   recommendations: RecommendationItem[];
   sections: RecommendationSections;
@@ -140,6 +145,7 @@ export interface RecommendationsResponse {
   /** Newer backends — prefer over scanning `recommendations` */
   bestRecommendation?: RecommendationItem | null;
   alternativeRecommendations?: RecommendationItem[];
+  engineVersion?: string;
 }
 
 export interface TasteAnalysisResponse {

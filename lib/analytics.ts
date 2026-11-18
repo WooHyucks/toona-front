@@ -300,6 +300,58 @@ export function trackAlternativeRecommendationReadClick(props: RecReadProps) {
   });
 }
 
+export function trackRecommendationResultViewed(props: {
+  source_webtoon_id: string;
+  refresh_count?: number;
+  pick_count?: number;
+}) {
+  sendOnce(
+    `recommendation_result_viewed:${props.source_webtoon_id}:${props.refresh_count ?? 0}`,
+    "recommendation_result_viewed",
+    props
+  );
+}
+
+export function trackRecommendationWebtoonClicked(props: {
+  source_webtoon_id: string;
+  recommended_webtoon_id: string;
+  recommendation_position: number;
+  refresh_count?: number;
+}) {
+  send("recommendation_webtoon_clicked", props);
+}
+
+export function trackRecommendationRefreshClicked(props: {
+  source_webtoon_id: string;
+  refresh_count?: number;
+  exclude_count?: number;
+}) {
+  send("recommendation_refresh_clicked", props);
+}
+
+export function trackRecommendationRefreshSucceeded(props: {
+  source_webtoon_id: string;
+  refresh_count?: number;
+  pick_count?: number;
+}) {
+  send("recommendation_refresh_succeeded", props);
+}
+
+export function trackRecommendationRefreshFailed(props: {
+  source_webtoon_id: string;
+  refresh_count?: number;
+  reason?: string;
+}) {
+  send("recommendation_refresh_failed", props);
+}
+
+export function trackRecommendationRestartClicked(props: {
+  source_webtoon_id: string;
+  refresh_count?: number;
+}) {
+  send("recommendation_restart_clicked", props);
+}
+
 export function trackWeekendPicksButtonClick(weekKey?: string) {
   send("weekend_picks_button_click", { weekKey: weekKey || undefined });
 }

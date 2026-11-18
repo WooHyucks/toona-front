@@ -18,10 +18,7 @@ import type { SearchWebtoonItem, WebtoonListItem } from "@/types/api";
 import { toUiPlatform } from "@/lib/api/mappers";
 import { PlatformBadge } from "@/features/webtoons/components/PlatformBadge";
 import { WebtoonThumbnail } from "@/features/webtoons/components/WebtoonThumbnail";
-import {
-  GENRE_LABELS,
-  type ToonaGenre,
-} from "@/features/webtoons/model";
+import { type ToonaGenre } from "@/features/webtoons/model";
 import { cn } from "@/lib/utils";
 import { getEpisodeLabel } from "@/lib/episode";
 import { prepareTasteAnalysis } from "@/lib/taste-flow";
@@ -29,21 +26,23 @@ import { trackPageView } from "@/lib/analytics";
 import { ToonaLogo } from "@/components/brand/ToonaLogo";
 import { WeekendPicksSection } from "@/features/weekend-picks/WeekendPicksSection";
 import { WeekendPicksOpenButton } from "@/features/weekend-picks/WeekendPicksOpenButton";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { useLocale, useT } from "@/lib/i18n/LocaleProvider";
 
 type GenreFilterId = "all" | ToonaGenre;
 
 const PAGE_SIZE = 48;
 const SEARCH_LIMIT = 30;
 
-const GENRE_FILTERS: Array<{ id: GenreFilterId; label: string }> = [
-  { id: "all", label: "전체" },
-  { id: "Fantasy", label: "판타지" },
-  { id: "Action", label: "액션" },
-  { id: "Romance", label: "로맨스" },
-  { id: "Historical", label: "무협" },
-  { id: "Drama", label: "드라마" },
-  { id: "Thriller", label: "스릴러" },
-  { id: "Comedy", label: "코미디" },
+const GENRE_FILTER_IDS: GenreFilterId[] = [
+  "all",
+  "Fantasy",
+  "Action",
+  "Romance",
+  "Historical",
+  "Drama",
+  "Thriller",
+  "Comedy",
 ];
 
 type BrowseEntry = {
@@ -93,15 +92,26 @@ function BrowseCard({
   priority?: boolean;
   onSelect: () => void;
 }) {
+  const t = useT();
   const platform = toUiPlatform(item.platform);
   const episode = getEpisodeLabel({
     status: item.status,
     latestEpisodeNumber: item.latestEpisodeNumber,
     totalEpisodeCount: item.totalEpisodeCount,
   });
+  const genreKey = item.genres[0];
   const genre =
-    item.genres[0] && item.genres[0] in GENRE_LABELS
-      ? GENRE_LABELS[item.genres[0] as ToonaGenre]
+    genreKey &&
+    [
+      "Fantasy",
+      "Action",
+      "Romance",
+      "Historical",
+      "Drama",
+      "Thriller",
+      "Comedy",
+    ].includes(genreKey)
+      ? t(`onboarding.genres.${genreKey}`)
       : null;
 
   return (
@@ -163,6 +173,8 @@ function takePage(
 
 export function OnboardingSearchScreen() {
   const router = useRouter();
+  const t = useT();
+  const { hrefWithLang } = useLocale();
   const [query, setQuery] = useState("");
   const [genre, setGenre] = useState<GenreFilterId>("all");
   const [browseItems, setBrowseItems] = useState<WebtoonListItem[]>([]);
@@ -273,14 +285,14 @@ export function OnboardingSearchScreen() {
         setBrowseError(
           err instanceof ToonaApiError
             ? err.message
-            : "작품을 불러오지 못했어요."
+            : t("onboarding.loadFailed")
         );
         setBrowseStatus("error");
       } finally {
         if (requestId === genreRequestId.current) setGenreLoading(false);
       }
     },
-    [applyBrowseEntry, ensurePopularPool]
+    [applyBrowseEntry, ensurePopularPool, t]
   );
 
   const loadBrowseMore = useCallback(async () => {
@@ -434,11 +446,11 @@ export function OnboardingSearchScreen() {
       setSearchError(
         err instanceof ToonaApiError
           ? err.message
-          : "검색에 실패했어요. 잠시 후 다시 시도해주세요."
+          : t("onboarding.searchFailed")
       );
       setSearchStatus("error");
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => runSearch(query), 300);
@@ -471,30 +483,33 @@ export function OnboardingSearchScreen() {
   function confirmSelection() {
     if (!selected) return;
     router.push(
-      prepareTasteAnalysis(selected.id, selected.title, {
-        origin: "HOME",
-        source: "home",
-        thumbnailUrl: selected.thumbnailUrl,
-        platform: selected.platform,
-      })
+      hrefWithLang(
+        prepareTasteAnalysis(selected.id, selected.title, {
+          origin: "HOME",
+          source: "home",
+          thumbnailUrl: selected.thumbnailUrl,
+          platform: selected.platform,
+        })
+      )
     );
   }
 
   return (
     <div className="mx-auto flex h-[100dvh] w-full max-w-lg flex-col overflow-hidden bg-background md:max-w-3xl lg:max-w-4xl">
       <div className="shrink-0 px-4 pt-4 md:px-6">
-        <div className="mb-4">
+        <div className="mb-4 flex items-center justify-between gap-3">
           <ToonaLogo size="sm" priority />
+          <LanguageSwitcher />
         </div>
         <div className="mb-4">
           <p className="text-[12px] font-medium text-primary">
-            이번 주말 뭐 보지?
+            {t("onboarding.eyebrow")}
           </p>
           <h1 className="mt-1 text-[20px] font-bold leading-snug tracking-[-0.02em] text-foreground md:text-[22px]">
-            이번 주말 정주행할 웹툰 TOP3
+            {t("onboarding.title")}
           </h1>
           <p className="mt-1.5 text-[13px] text-muted-foreground md:text-[14px]">
-            제일 재밌게 본 웹툰 하나만 골라보세요.
+            {t("onboarding.subtitle")}
           </p>
           {picksAvailable ? (
             <WeekendPicksOpenButton
@@ -513,7 +528,7 @@ export function OnboardingSearchScreen() {
           }}
         >
           <label htmlFor="onboarding-search" className="sr-only">
-            웹툰 검색
+            {t("onboarding.searchLabel")}
           </label>
           <Search
             className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
@@ -524,7 +539,7 @@ export function OnboardingSearchScreen() {
             type="search"
             value={query}
             autoComplete="off"
-            placeholder="작품명 또는 작가명"
+            placeholder={t("onboarding.searchPlaceholder")}
             onChange={(e) => {
               setQuery(e.target.value);
               setSelected(null);
@@ -534,7 +549,7 @@ export function OnboardingSearchScreen() {
           {query ? (
             <button
               type="button"
-              aria-label="검색어 지우기"
+              aria-label={t("common.clearSearch")}
               onClick={clearSearch}
               className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center text-muted-foreground"
             >
@@ -547,18 +562,22 @@ export function OnboardingSearchScreen() {
           <div
             className="-mx-4 mb-5 flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-hide md:mx-0 md:px-0"
             role="tablist"
-            aria-label="장르 필터"
+            aria-label={t("onboarding.genreFilter")}
           >
-            {GENRE_FILTERS.map((chip) => {
-              const active = genre === chip.id;
+            {GENRE_FILTER_IDS.map((id) => {
+              const active = genre === id;
+              const label =
+                id === "all"
+                  ? t("onboarding.genres.all")
+                  : t(`onboarding.genres.${id}`);
               return (
                 <button
-                  key={chip.id}
+                  key={id}
                   type="button"
                   role="tab"
                   aria-selected={active}
                   disabled={genreLoading && active}
-                  onClick={() => onGenreChange(chip.id)}
+                  onClick={() => onGenreChange(id)}
                   className={cn(
                     "min-h-10 shrink-0 rounded-full px-3.5 text-[13px] font-medium transition-colors",
                     active
@@ -567,7 +586,7 @@ export function OnboardingSearchScreen() {
                     genreLoading && active && "opacity-70"
                   )}
                 >
-                  {chip.label}
+                  {label}
                 </button>
               );
             })}
@@ -583,11 +602,11 @@ export function OnboardingSearchScreen() {
           <>
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-[14px] font-semibold text-foreground">
-                요즘 많이 보는 작품
+                {t("onboarding.popularSection")}
               </h2>
               {genreLoading ? (
                 <span className="text-[11px] text-muted-foreground">
-                  불러오는 중
+                  {t("common.loading")}
                 </span>
               ) : null}
             </div>
@@ -610,7 +629,7 @@ export function OnboardingSearchScreen() {
                   onClick={() => loadBrowseInitial(genre, { force: true })}
                   className="mt-4 min-h-11 rounded-xl bg-primary px-4 text-[13px] font-semibold text-primary-foreground"
                 >
-                  다시 시도
+                  {t("common.retry")}
                 </button>
               </div>
             ) : null}
@@ -618,17 +637,17 @@ export function OnboardingSearchScreen() {
             {browseStatus === "empty" ? (
               <div className="rounded-2xl bg-card px-4 py-8 text-center">
                 <p className="text-[14px] font-medium text-foreground">
-                  아직 추천 가능한 작품을 준비하고 있어요.
+                  {t("onboarding.notReadyYet")}
                 </p>
                 <p className="mt-1 text-[13px] text-muted-foreground">
-                  잠시 후 다시 시도하거나 검색으로 찾아보세요.
+                  {t("onboarding.emptyHint")}
                 </p>
                 <button
                   type="button"
                   onClick={() => loadBrowseInitial(genre, { force: true })}
                   className="mt-4 min-h-11 rounded-xl bg-primary px-4 text-[13px] font-semibold text-primary-foreground"
                 >
-                  다시 시도
+                  {t("common.retry")}
                 </button>
               </div>
             ) : null}
@@ -663,7 +682,7 @@ export function OnboardingSearchScreen() {
                       role="status"
                     >
                       <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                      더 불러오는 중
+                      {t("onboarding.loadingMore")}
                     </div>
                   ) : null}
                 </div>
@@ -673,9 +692,9 @@ export function OnboardingSearchScreen() {
         ) : (
           <>
             <h2 className="mb-3 text-[14px] font-semibold text-foreground">
-              ‘{query.trim()}’ 검색 결과
+              {t("onboarding.searchResults", { query: query.trim() })}
               {searchStatus === "success"
-                ? ` · ${searchCards.length}개`
+                ? t("onboarding.resultCount", { count: searchCards.length })
                 : null}
             </h2>
 
@@ -697,7 +716,7 @@ export function OnboardingSearchScreen() {
                   onClick={() => runSearch(query)}
                   className="mt-4 min-h-11 rounded-xl bg-primary px-4 text-[13px] font-semibold text-primary-foreground"
                 >
-                  다시 시도
+                  {t("common.retry")}
                 </button>
               </div>
             ) : null}
@@ -705,17 +724,17 @@ export function OnboardingSearchScreen() {
             {searchStatus === "empty" ? (
               <div className="rounded-2xl bg-card px-4 py-8 text-center">
                 <p className="text-[14px] font-medium text-foreground">
-                  검색 결과가 없어요.
+                  {t("onboarding.noSearchResults")}
                 </p>
                 <p className="mt-1 text-[13px] text-muted-foreground">
-                  작품명을 다시 확인하거나 장르에서 골라보세요.
+                  {t("onboarding.noSearchHint")}
                 </p>
                 <button
                   type="button"
                   onClick={clearSearch}
                   className="mt-4 min-h-11 rounded-xl border border-border px-4 text-[13px] font-semibold text-foreground"
                 >
-                  검색어 지우기
+                  {t("common.clearSearch")}
                 </button>
               </div>
             ) : null}
@@ -750,9 +769,9 @@ export function OnboardingSearchScreen() {
         <div className="mx-auto w-full max-w-lg md:max-w-3xl lg:max-w-4xl">
           {selected ? (
             <p className="mb-2 truncate text-center text-[12px] text-muted-foreground">
-              선택됨 · {selected.title}
+              {t("onboarding.selectedPrefix")} · {selected.title}
               {!selected.recommendationReady
-                ? " · 취향 분석이 아직 준비 중일 수 있어요"
+                ? ` · ${t("onboarding.maybeNotReady")}`
                 : null}
             </p>
           ) : null}
@@ -762,7 +781,7 @@ export function OnboardingSearchScreen() {
             onClick={confirmSelection}
             className="flex min-h-12 w-full items-center justify-center rounded-2xl bg-primary text-[15px] font-semibold text-primary-foreground transition-opacity disabled:opacity-40"
           >
-            이 작품으로 추천받기
+            {t("onboarding.cta")}
           </button>
         </div>
       </div>

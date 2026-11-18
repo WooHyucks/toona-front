@@ -14,6 +14,7 @@ import {
   trackWeekendPickImpression,
 } from "@/lib/analytics";
 import type { WeekendPickItem } from "@/types/api";
+import { useT } from "@/lib/i18n/LocaleProvider";
 import {
   getCachedOfficialUrl,
   pickThumbnailUrl,
@@ -39,6 +40,7 @@ export function WeekendPickCard({
   compact = false,
   onReview,
 }: Props) {
+  const t = useT();
   const router = useRouter();
   const isMobile = useIsMobile();
   const rootRef = useRef<HTMLElement | null>(null);
@@ -140,7 +142,7 @@ export function WeekendPickCard({
           )}
           onClick={onReview}
         >
-          ▶ 리뷰로 찍먹
+          {t("weekend.reviewSnack")}
         </Button>
       ) : null}
       {isNaver && readHref ? (
@@ -159,7 +161,7 @@ export function WeekendPickCard({
             rel="noopener noreferrer"
             onClick={() => emitDirectRead(officialUrl)}
           >
-            바로 보러가기
+            {t("weekend.directRead")}
           </a>
         </Button>
       ) : (
@@ -173,7 +175,7 @@ export function WeekendPickCard({
           )}
           onClick={() => void onDirectRead()}
         >
-          바로 보러가기
+          {t("weekend.directRead")}
         </Button>
       )}
     </div>

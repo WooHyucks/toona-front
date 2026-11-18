@@ -1,27 +1,29 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n/LocaleProvider";
 
 type Props = {
-  /** found = after confirm; similar = discovery after miss */
   variant: "found" | "similar";
   onOpenToonaPick: () => void;
 };
 
 export function FindDiscoveryCta({ variant, onOpenToonaPick }: Props) {
+  const t = useT();
+
   if (variant === "found") {
     return (
       <div className="mt-12 border-t border-border pt-8">
         <p className="text-[16px] font-semibold tracking-[-0.02em] text-foreground">
-          이 작품을 찾고 계셨군요.
+          {t("find.discoveryFoundLine1")}
         </p>
         <p className="mt-1 text-[15px] font-semibold tracking-[-0.02em] text-foreground">
-          혹시 새로운 웹툰도 찾고 계신가요?
+          {t("find.discoveryFoundLine2")}
         </p>
         <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">
-          오늘 정주행하기 좋은 작품을
+          {t("find.discoveryFoundBody1")}
           <br />
-          유저님 취향에 맞춰 골라드릴게요.
+          {t("find.discoveryFoundBody2")}
         </p>
         <Button
           type="button"
@@ -29,7 +31,7 @@ export function FindDiscoveryCta({ variant, onOpenToonaPick }: Props) {
           className="mt-4 min-h-12 w-full text-[14px] font-semibold"
           onClick={onOpenToonaPick}
         >
-          오늘의 투나픽 보기
+          {t("find.toonaPickCta")}
         </Button>
       </div>
     );
@@ -38,21 +40,21 @@ export function FindDiscoveryCta({ variant, onOpenToonaPick }: Props) {
   return (
     <div className="mt-10 border-t border-border pt-8">
       <p className="text-[16px] font-semibold tracking-[-0.02em] text-foreground">
-        찾던 작품 말고,
+        {t("find.discoverySimilarLine1")}
         <br />
-        새로운 작품도 만나볼까요?
+        {t("find.discoverySimilarLine2")}
       </p>
       <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">
-        오늘 정주행하기 좋은 웹툰을
+        {t("find.discoverySimilarBody1")}
         <br />
-        유저님 취향에 맞춰 골라드릴게요.
+        {t("find.discoverySimilarBody2")}
       </p>
       <Button
         type="button"
         className="mt-4 min-h-12 w-full text-[15px] font-semibold"
         onClick={onOpenToonaPick}
       >
-        오늘의 투나픽 보기
+        {t("find.toonaPickCta")}
       </Button>
     </div>
   );

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
-import { motion } from "framer-motion";
+import { ArrowLeft, RefreshCw } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { fetchRecommendations } from "@/lib/api/recommendations";
 import { ToonaApiError } from "@/lib/api/client";
 import {
@@ -11,21 +11,26 @@ import {
   getSessionId,
   setFavoriteWebtoon,
 } from "@/lib/session";
-import { track, trackRecommendationViewed } from "@/lib/analytics";
-import { RecommendationShareButton } from "@/features/recommendations/RecommendationShareButton";
-import { CreateLifetimeCollectionCta } from "@/features/lifetime/CreateLifetimeCollectionCta";
 import {
-  AlternativeRecommendationCard,
-  BestRecommendationCard,
-} from "@/features/recommendations/BestFirstResult";
+  track,
+  trackRecommendationRefreshClicked,
+  trackRecommendationRefreshFailed,
+  trackRecommendationRefreshSucceeded,
+  trackRecommendationRestartClicked,
+  trackRecommendationResultViewed,
+  trackRecommendationViewed,
+} from "@/lib/analytics";
+import { RecommendationShareButton } from "@/features/recommendations/RecommendationShareButton";
+import { RecommendationPickCard } from "@/features/recommendations/BestFirstResult";
 import {
   hasRecommendationResults,
-  pickAlternativeRecommendations,
-  pickBestRecommendation,
+  pickRecommendationSet,
 } from "@/lib/recommendations-result";
 import type { RecommendationsResponse } from "@/types/api";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { Button } from "@/components/ui/button";
+import { useLocale, useT } from "@/lib/i18n/LocaleProvider";
+import { WebtoonCover } from "@/features/webtoons/components/WebtoonCover";
 
 export type ResultScreenProps = {
   webtoonId: string;
@@ -45,6 +50,9 @@ export function ResultScreen({
   entrySource = null,
 }: ResultScreenProps) {
   const router = useRouter();
+  const t = useT();
+  const { hrefWithLang } = useLocale();
+  const reduceMotion = useReducedMotion();
   const fromShare =
     entrySource === "share" || entrySource === "shared-recommendation";
 
@@ -55,11 +63,17 @@ export function ResultScreen({
   const [errorMessage, setErrorMessage] = useState("");
   const [errorCode, setErrorCode] = useState("");
   const [sessionId, setSessionId] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState("");
+  const [refreshCount, setRefreshCount] = useState(0);
+  const [noMorePicks, setNoMorePicks] = useState(false);
+  const picksTopRef = useRef<HTMLDivElement | null>(null);
+  const excludedHistory = useRef<Set<string>>(new Set());
 
-  const best = useMemo(() => pickBestRecommendation(data), [data]);
-  const alternatives = useMemo(
-    () => pickAlternativeRecommendations(data, best),
-    [data, best]
+  const picks = useMemo(() => pickRecommendationSet(data), [data]);
+  const shownIds = useMemo(
+    () => picks.map((item) => item.webtoon.id).filter(Boolean),
+    [picks]
   );
 
   useEffect(() => {
@@ -73,6 +87,12 @@ export function ResultScreen({
       sourceTitle: data.source.title,
       source: entrySource === "world-cup" ? "worldcup" : "direct",
     });
+    trackRecommendationResultViewed({
+      source_webtoon_id: data.source.id || webtoonId,
+      refresh_count: refreshCount,
+      pick_count: picks.length,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, data, webtoonId, entrySource]);
 
   useEffect(() => {
@@ -90,7 +110,7 @@ export function ResultScreen({
 
   useEffect(() => {
     if (!webtoonId) {
-      setErrorMessage("작품을 선택해주세요.");
+      setErrorMessage(t("result.pickWork"));
       setErrorCode("not_found");
       setStatus("error");
       return;
@@ -100,26 +120,31 @@ export function ResultScreen({
     (async () => {
       try {
         const sid = getSessionId();
-        const res = await fetchRecommendations(webtoonId, sid);
+        setSessionId(sid);
+        const res = await fetchRecommendations(webtoonId, {
+          sessionId: sid,
+        });
         if (cancelled) return;
         setData(res);
         setStatus(hasRecommendationResults(res) ? "success" : "empty");
+        setNoMorePicks(false);
+        excludedHistory.current = new Set();
       } catch (err) {
         if (cancelled) return;
         setStatus("error");
         if (err instanceof ToonaApiError) {
           if (err.status === 404 || err.code === "not_found") {
-            setErrorMessage("추천 기준 작품을 찾을 수 없어요.");
+            setErrorMessage(t("result.sourceNotFound"));
             setErrorCode("not_found");
           } else if (err.code === "untagged") {
-            setErrorMessage("이 작품은 아직 추천 준비 중이에요.");
+            setErrorMessage(t("result.notReady"));
             setErrorCode("untagged");
           } else {
             setErrorMessage(err.message);
             setErrorCode(err.code);
           }
         } else {
-          setErrorMessage("추천을 불러오지 못했어요.");
+          setErrorMessage(t("result.loadFailed"));
           setErrorCode("network_error");
         }
       }
@@ -128,24 +153,98 @@ export function ResultScreen({
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [webtoonId]);
 
-  const sourceTitle = data?.source.title ?? titleHint ?? "선택한 작품";
+  function scrollToPicks() {
+    picksTopRef.current?.scrollIntoView({
+      behavior: reduceMotion ? "auto" : "smooth",
+      block: "start",
+    });
+  }
+
+  async function refreshRecommendations() {
+    if (!webtoonId || refreshing) return;
+    const sid = sessionId || getSessionId();
+    setSessionId(sid);
+    setRefreshing(true);
+    setRefreshError("");
+    setNoMorePicks(false);
+
+    for (const id of shownIds) excludedHistory.current.add(id);
+    const excludeWebtoonIds = Array.from(excludedHistory.current);
+
+    trackRecommendationRefreshClicked({
+      source_webtoon_id: webtoonId,
+      refresh_count: refreshCount,
+      exclude_count: excludeWebtoonIds.length,
+    });
+
+    try {
+      const res = await fetchRecommendations(webtoonId, {
+        sessionId: sid,
+        refresh: true,
+        excludeWebtoonIds,
+      });
+      const next = pickRecommendationSet(res);
+      const nextIds = next.map((item) => item.webtoon.id);
+      const allOverlap =
+        next.length > 0 &&
+        nextIds.every((id) => shownIds.includes(id)) &&
+        nextIds.length === shownIds.length;
+
+      if (!hasRecommendationResults(res) || next.length === 0 || allOverlap) {
+        setNoMorePicks(true);
+        trackRecommendationRefreshFailed({
+          source_webtoon_id: webtoonId,
+          refresh_count: refreshCount,
+          reason: "no_new_picks",
+        });
+        return;
+      }
+
+      setData(res);
+      setStatus("success");
+      setRefreshCount((n) => n + 1);
+      trackRecommendationRefreshSucceeded({
+        source_webtoon_id: webtoonId,
+        refresh_count: refreshCount + 1,
+        pick_count: next.length,
+      });
+      requestAnimationFrame(() => scrollToPicks());
+    } catch {
+      setRefreshError(t("result.refreshFailed"));
+      trackRecommendationRefreshFailed({
+        source_webtoon_id: webtoonId,
+        refresh_count: refreshCount,
+        reason: "request_error",
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
+  const sourceTitle = data?.source.title ?? titleHint ?? t("result.selectedWork");
+  const sourceThumb = data?.source.thumbnailUrl ?? null;
 
   function goPickWebtoon() {
-    track("shared_recommendation_home_clicked", {
-      sourceWebtoonId: webtoonId,
-      action: "pick_webtoon",
+    trackRecommendationRestartClicked({
+      source_webtoon_id: webtoonId,
+      refresh_count: refreshCount,
     });
-    router.push("/onboarding?source=shared-recommendation");
+    if (fromShare) {
+      track("shared_recommendation_home_clicked", {
+        sourceWebtoonId: webtoonId,
+        action: "pick_webtoon",
+      });
+      router.push(hrefWithLang("/onboarding?source=shared-recommendation"));
+      return;
+    }
+    router.push(hrefWithLang("/onboarding"));
   }
 
   function goRepickWebtoon() {
-    if (fromShare) {
-      goPickWebtoon();
-      return;
-    }
-    router.push("/onboarding");
+    goPickWebtoon();
   }
 
   function goBrowseHome() {
@@ -153,7 +252,7 @@ export function ResultScreen({
       sourceWebtoonId: webtoonId,
       action: "browse_home",
     });
-    router.push("/home#home-browse");
+    router.push(hrefWithLang("/home#home-browse"));
   }
 
   function goHome() {
@@ -167,11 +266,11 @@ export function ResultScreen({
         source: "world-cup",
       });
     }
-    router.push("/home");
+    router.push(hrefWithLang("/home"));
   }
 
   if (status === "loading") {
-    return <LoadingSpinner fullPage label="추천을 고르는 중" />;
+    return <LoadingSpinner fullPage label={t("result.picking")} />;
   }
 
   if (status === "error") {
@@ -180,8 +279,8 @@ export function ResultScreen({
         <p className="text-[16px] font-semibold text-foreground">{errorMessage}</p>
         <p className="mt-2 text-[13px] text-muted-foreground">
           {errorCode === "untagged"
-            ? "다른 웹툰을 골라주세요."
-            : "내가 재밌게 본 웹툰을 골라볼 수 있어요."}
+            ? t("result.pickOtherHint")
+            : t("result.pickFavoriteHint")}
         </p>
         <div className="mt-6 flex flex-col gap-2 sm:flex-row">
           <Button
@@ -190,8 +289,8 @@ export function ResultScreen({
             onClick={goPickWebtoon}
           >
             {errorCode === "untagged"
-              ? "다른 웹툰 고르기"
-              : "내가 재밌게 본 웹툰 고르기"}
+              ? t("result.pickOther")
+              : t("result.pickFavorite")}
           </Button>
           {errorCode !== "untagged" && errorCode !== "not_found" ? (
             <Button
@@ -200,7 +299,7 @@ export function ResultScreen({
               className="min-h-11 rounded-xl px-4 text-[13px] font-semibold"
               onClick={() => window.location.reload()}
             >
-              다시 시도
+              {t("common.retry")}
             </Button>
           ) : null}
         </div>
@@ -210,8 +309,8 @@ export function ResultScreen({
 
   return (
     <motion.div
-      className="mx-auto min-h-[100dvh] w-full max-w-lg bg-background px-4 pb-12 pt-6 md:max-w-xl md:px-6"
-      initial={{ opacity: 0 }}
+      className="mx-auto min-h-[100dvh] w-full max-w-lg bg-background px-4 pb-[max(3rem,env(safe-area-inset-bottom))] pt-5 md:max-w-xl md:px-6 md:pt-6"
+      initial={reduceMotion ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
     >
       <button
@@ -220,99 +319,149 @@ export function ResultScreen({
         className="-ml-2 mb-3 inline-flex min-h-11 items-center gap-1 rounded-xl px-2 text-[13px] font-medium text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden />
-        웹툰 다시 고르기
+        {t("result.pickAgain")}
       </button>
-      <p className="text-[12px] font-medium text-muted-foreground">
-        {fromShare ? "추천 결과" : `${sourceTitle}을 기준으로 골랐어요`}
-      </p>
-      <h1 className="mt-1 text-[22px] font-bold tracking-[-0.02em] text-foreground">
-        {fromShare
-          ? `${sourceTitle}을 재미있게 봤다면`
-          : "이번 주말엔 이거 보세요"}
-      </h1>
 
-      {status === "empty" || !best ? (
-        <div className="mt-10 rounded-2xl bg-card px-4 py-10 text-center">
+      <header className="mb-5">
+        <h1 className="text-[22px] font-bold leading-snug tracking-[-0.03em] text-foreground md:text-[24px]">
+          {fromShare
+            ? t("result.shareLiked", { title: sourceTitle })
+            : t("result.foundTitle")}
+        </h1>
+        {!fromShare ? (
+          <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground md:text-[14px]">
+            {t("result.foundSubtitle")}
+          </p>
+        ) : null}
+
+        <div className="mt-3.5 flex items-center gap-3 rounded-2xl border border-border/70 bg-card/60 px-3 py-2.5">
+          <div className="relative h-12 w-9 shrink-0 overflow-hidden rounded-lg bg-elevated">
+            <WebtoonCover
+              src={sourceThumb}
+              alt={sourceTitle}
+              fill
+              className="object-cover object-top"
+            />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-medium text-muted-foreground">
+              {t("result.youLiked")}
+            </p>
+            <p className="mt-0.5 truncate text-[14px] font-semibold text-foreground">
+              {sourceTitle}
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <div ref={picksTopRef} className="scroll-mt-4" />
+
+      {status === "empty" || picks.length === 0 ? (
+        <div className="rounded-2xl bg-card px-4 py-10 text-center">
           <p className="text-[15px] font-medium text-foreground">
-            비슷한 작품을 아직 찾지 못했어요.
+            {t("result.noSimilar")}
           </p>
           <Button
             type="button"
             className="mt-4 min-h-11 rounded-xl px-4 text-[13px] font-semibold"
             onClick={goPickWebtoon}
           >
-            다른 작품 선택하기
+            {t("analysis.pickOther")}
           </Button>
         </div>
       ) : (
-        <div className="mt-5">
-          <BestRecommendationCard
-            item={best}
-            sourceId={webtoonId}
-            sessionId={sessionId}
-            fromShare={fromShare}
-          />
-          {alternatives.length > 0 ? (
-            <section className="mt-6">
-              <h2 className="mb-3 text-[14px] font-semibold text-muted-foreground">
-                다른 선택지
-              </h2>
-              <div className="grid grid-cols-2 gap-2.5">
-                {alternatives.map((item) => (
-                  <AlternativeRecommendationCard
-                    key={`${item.recommendationType}-${item.webtoon.id}`}
-                    item={item}
-                    sourceId={webtoonId}
-                    sessionId={sessionId}
-                    fromShare={fromShare}
-                  />
-                ))}
-              </div>
-            </section>
-          ) : null}
-        </div>
-      )}
+        <>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`${refreshCount}-${shownIds.join("-")}`}
+              className="space-y-4"
+              initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduceMotion ? undefined : { opacity: 0, y: -6 }}
+              transition={{ duration: 0.25 }}
+            >
+              {picks.map((item, index) => (
+                <RecommendationPickCard
+                  key={`${item.webtoon.id}-${item.recommendationType}-${refreshCount}`}
+                  item={item}
+                  sourceId={webtoonId}
+                  sessionId={sessionId}
+                  fromShare={fromShare}
+                  position={index + 1}
+                  refreshCount={refreshCount}
+                  priority={index === 0}
+                />
+              ))}
+            </motion.div>
+          </AnimatePresence>
 
-      {status !== "empty" && best ? (
-        <div className="mt-6 space-y-3">
-          {fromShare ? (
-            <>
-              <RecommendationShareButton
-                sourceWebtoonId={webtoonId}
-                sourceTitle={sourceTitle}
-              />
+          <section className="mt-8 space-y-3 border-t border-border/60 pt-7">
+            <p className="text-center text-[13px] leading-relaxed text-muted-foreground">
+              {noMorePicks ? t("result.noMoreRefresh") : t("result.refreshHint")}
+            </p>
+            {!noMorePicks ? (
               <Button
                 type="button"
+                disabled={refreshing}
                 className="min-h-12 w-full rounded-2xl text-[15px] font-semibold"
-                onClick={goPickWebtoon}
+                onClick={() => void refreshRecommendations()}
               >
-                내가 재밌게 본 웹툰도 골라보기
+                <RefreshCw
+                  className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+                  aria-hidden
+                />
+                {refreshing ? t("result.refreshing") : t("result.refreshPicks")}
               </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                className="min-h-11 w-full rounded-2xl text-[14px] font-semibold"
-                onClick={goBrowseHome}
-              >
-                다른 웹툰 둘러보기
-              </Button>
-            </>
-          ) : (
-            <>
-              <CreateLifetimeCollectionCta
-                sourceWebtoonId={data?.source.id || webtoonId}
-                sourceTitle={sourceTitle}
-                onSkipHome={goHome}
-                skipLabel="홈으로 가기"
-              />
-              <RecommendationShareButton
-                sourceWebtoonId={webtoonId}
-                sourceTitle={sourceTitle}
-              />
-            </>
-          )}
-        </div>
-      ) : null}
+            ) : null}
+            {refreshError ? (
+              <p className="text-center text-[12px] text-muted-foreground">
+                {refreshError}
+              </p>
+            ) : null}
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-12 w-full rounded-2xl text-[14px] font-semibold"
+              onClick={goPickWebtoon}
+            >
+              {t("result.retaste")}
+            </Button>
+          </section>
+
+          <div className="mt-5 space-y-3">
+            {fromShare ? (
+              <>
+                <RecommendationShareButton
+                  sourceWebtoonId={webtoonId}
+                  sourceTitle={sourceTitle}
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="min-h-11 w-full rounded-2xl text-[14px] font-semibold"
+                  onClick={goBrowseHome}
+                >
+                  {t("result.browseOther")}
+                </Button>
+              </>
+            ) : (
+              <>
+                <RecommendationShareButton
+                  sourceWebtoonId={webtoonId}
+                  sourceTitle={sourceTitle}
+                />
+                <button
+                  type="button"
+                  onClick={goHome}
+                  className="w-full py-2 text-center text-[12px] text-muted-foreground/80 underline-offset-2 hover:text-foreground hover:underline"
+                >
+                  {t("result.goHome")}
+                </button>
+              </>
+            )}
+          </div>
+        </>
+      )}
     </motion.div>
   );
 }

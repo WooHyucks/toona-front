@@ -12,6 +12,8 @@ import {
   getFindSession,
 } from "@/lib/api/find";
 import { ToonaApiError } from "@/lib/api/client";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { useT } from "@/lib/i18n/LocaleProvider";
 import { getSessionId } from "@/lib/session";
 import {
   trackFindAllCandidatesRejected,
@@ -104,6 +106,7 @@ function similarStats(list: FindCandidate[]) {
 }
 
 export function FindScreen() {
+  const t = useT();
   const reduceMotion = useReducedMotion();
   const [phase, setPhase] = useState<Phase>("idle");
   const [draft, setDraft] = useState("");
@@ -171,12 +174,15 @@ export function FindScreen() {
           turn_number: nextTurn,
           ...candidateStats(shownCandidates),
         });
-        trackFindResultShown({
-          session_id: data.sessionId,
-          result_type: "candidate",
-          result_count: shownCandidates.length,
-          attempt: nextAttempt,
-        });
+        // MVP: only when a result card is actually on screen
+        if (shownCandidates.length > 0) {
+          trackFindResultShown({
+            session_id: data.sessionId,
+            result_type: "candidate",
+            result_count: shownCandidates.length,
+            attempt: nextAttempt,
+          });
+        }
       } else if (data.status === "SIMILAR") {
         setPhase("similar");
         const heroCount = nextSimilar.length > 0 ? 1 : 0;
@@ -186,12 +192,14 @@ export function FindScreen() {
           attempt: nextAttempt,
           ...similarStats(nextSimilar.slice(0, 1)),
         });
-        trackFindResultShown({
-          session_id: data.sessionId,
-          result_type: "similar",
-          result_count: heroCount,
-          attempt: nextAttempt,
-        });
+        if (heroCount > 0) {
+          trackFindResultShown({
+            session_id: data.sessionId,
+            result_type: "similar",
+            result_count: heroCount,
+            attempt: nextAttempt,
+          });
+        }
       } else {
         setPhase("need_more");
         trackFindNeedMoreInfo({
@@ -230,47 +238,12 @@ export function FindScreen() {
         setConfirmed(data.webtoon);
         setPhase("found");
       } else if (data.status === "CANDIDATES") {
-        const shown = data.candidates.slice(0, 3);
-        const nextAttempt = data.attempt ?? mems.length;
+        // Restore: show UI, but do not re-fire MVP conversion events
         setPhase("candidates");
-        trackFindCandidatesShown({
-          session_id: data.sessionId,
-          turn_number: data.turnCount,
-          ...candidateStats(shown),
-        });
-        trackFindResultShown({
-          session_id: data.sessionId,
-          result_type: "candidate",
-          result_count: shown.length,
-          attempt: nextAttempt,
-        });
       } else if (data.status === "SIMILAR") {
-        const nextAttempt = data.attempt ?? mems.length;
         setPhase("similar");
-        trackFindSimilarShown({
-          session_id: data.sessionId,
-          turn_number: data.turnCount,
-          attempt: nextAttempt,
-          ...similarStats(nextSimilar.slice(0, 1)),
-        });
-        trackFindResultShown({
-          session_id: data.sessionId,
-          result_type: "similar",
-          result_count: nextSimilar.length > 0 ? 1 : 0,
-          attempt: nextAttempt,
-        });
       } else {
-        const nextAttempt = data.attempt ?? mems.length;
         setPhase("need_more");
-        trackFindNeedMoreInfo({
-          session_id: data.sessionId,
-          turn_number: data.turnCount,
-          attempt: nextAttempt,
-        });
-        trackFindNeedMoreInfoShown({
-          session_id: data.sessionId,
-          attempt: nextAttempt,
-        });
       }
     } catch {
       clearStoredFindSessionId();
@@ -506,6 +479,9 @@ export function FindScreen() {
   return (
     <div className="pb-16 md:pb-20">
       <DesktopContent narrow className="max-w-[720px] pt-8 md:pt-12">
+        <div className="mb-4 flex justify-end md:hidden">
+          <LanguageSwitcher />
+        </div>
         {phase === "idle" ? (
           <motion.div {...fade}>
             <FindIdleForm
@@ -521,11 +497,11 @@ export function FindScreen() {
 
         {phase === "error" ? (
           <ErrorState
-            title="웹툰을 찾는 중 문제가 생겼어요"
-            description="잠시 후 다시 시도해주세요."
+            title={t("find.errorTitle")}
+            description={t("find.errorDesc")}
             onRetry={retry}
-            retryLabel="다시 시도"
-            secondaryAction={{ label: "처음부터", onClick: reset }}
+            retryLabel={t("common.retry")}
+            secondaryAction={{ label: t("common.fromStart"), onClick: reset }}
           />
         ) : null}
 
@@ -533,7 +509,7 @@ export function FindScreen() {
           <motion.div {...fade}>
             <FindMemoryTrail memories={memories} compact />
             <h2 className="text-[22px] font-bold tracking-[-0.03em] text-foreground">
-              혹시 이 웹툰인가요?
+              {t("find.candidatesTitle")}
             </h2>
             <div
               className={
@@ -556,17 +532,17 @@ export function FindScreen() {
             {refineOpen ? (
               <div className="mt-8">
                 <p className="text-[18px] font-bold tracking-[-0.03em] text-foreground">
-                  괜찮아요. 기억나는 걸 조금만 더 알려주세요.
+                  {t("find.refineHint")}
                 </p>
                 <p className="mt-2 text-[14px] text-muted-foreground">
-                  예: 그림체가 눈이 엄청 컸어요.
+                  {t("find.refineExample")}
                 </p>
                 <FindFollowUpForm
                   value={followUp}
                   onChange={setFollowUp}
                   disabled={busy}
-                  ctaLabel="다시 찾아보기"
-                  placeholder="기억나는 내용을 더 적어주세요"
+                  ctaLabel={t("find.refineCta")}
+                  placeholder={t("find.refinePlaceholder")}
                   onSubmit={() => void continueSearch(followUp, true)}
                 />
               </div>
@@ -576,7 +552,7 @@ export function FindScreen() {
               onClick={reset}
               className="mt-8 text-[13px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
             >
-              다른 웹툰 찾기
+              {t("find.findOther")}
             </button>
           </motion.div>
         ) : null}
@@ -585,12 +561,12 @@ export function FindScreen() {
           <motion.div {...fade}>
             <FindMemoryTrail memories={memories} compact />
             <h2 className="text-[22px] font-bold tracking-[-0.03em] text-foreground">
-              찾으시던 웹툰은 아직 특정하지 못했어요.
+              {t("find.similarTitle")}
             </h2>
             <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">
-              대신 말씀해주신 내용과
+              {t("find.similarSubLine1")}
               <br />
-              가장 비슷한 웹툰을 하나 가져와봤어요.
+              {t("find.similarSubLine2")}
             </p>
             {heroSimilar ? (
               <div className="mt-6">
@@ -624,8 +600,7 @@ export function FindScreen() {
               </div>
             ) : (
               <p className="mt-6 text-[14px] text-muted-foreground">
-                {assistantNote?.trim() ||
-                  "비슷한 작품을 찾지 못했어요. 투나픽으로 새 작품을 찾아볼까요?"}
+                {assistantNote?.trim() || t("find.similarEmpty")}
               </p>
             )}
 
@@ -648,19 +623,19 @@ export function FindScreen() {
                 }}
                 className="mt-6 min-h-10 w-full text-[13px] font-medium text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-50"
               >
-                기억나는 게 더 있어요
+                {t("find.continueMemory")}
               </button>
             ) : (
               <div className="mt-6">
                 <p className="text-[16px] font-bold tracking-[-0.02em] text-foreground">
-                  기억나는 내용을 더 적어주세요
+                  {t("find.moreMemoryTitle")}
                 </p>
                 <FindFollowUpForm
                   value={followUp}
                   onChange={setFollowUp}
                   disabled={busy}
-                  ctaLabel="다시 찾아보기"
-                  placeholder="기억나는 내용을 더 적어주세요"
+                  ctaLabel={t("find.refineCta")}
+                  placeholder={t("find.refinePlaceholder")}
                   onSubmit={() => void continueSearch(followUp, false)}
                 />
               </div>
@@ -670,7 +645,7 @@ export function FindScreen() {
               onClick={reset}
               className="mt-6 text-[13px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
             >
-              다른 웹툰 찾기
+              {t("find.findOther")}
             </button>
           </motion.div>
         ) : null}
@@ -679,10 +654,10 @@ export function FindScreen() {
           <motion.div {...fade}>
             <FindMemoryTrail memories={memories} compact />
             <h2 className="text-[22px] font-bold tracking-[-0.03em] text-foreground">
-              조금만 더 기억을 더듬어볼까요?
+              {t("find.needMoreTitle")}
             </h2>
             <p className="mt-1 text-[13px] font-medium text-muted-foreground">
-              한 가지만 더 알려주세요.
+              {t("find.needMoreHint")}
             </p>
             {followUpQuestion ? (
               <p className="mt-4 text-[16px] font-semibold leading-snug text-foreground">
@@ -690,15 +665,15 @@ export function FindScreen() {
               </p>
             ) : (
               <p className="mt-4 text-[15px] font-semibold leading-snug text-foreground">
-                기억나는 등장인물이나 특정 장면이 하나 더 있나요?
+                {t("find.needMoreFallback")}
               </p>
             )}
             <FindFollowUpForm
               value={followUp}
               onChange={setFollowUp}
               disabled={busy}
-              ctaLabel="다시 찾아보기"
-              placeholder="기억나는 내용을 더 적어주세요"
+              ctaLabel={t("find.refineCta")}
+              placeholder={t("find.refinePlaceholder")}
               onSubmit={() => void continueSearch(followUp, false)}
             />
             <Button
@@ -707,7 +682,7 @@ export function FindScreen() {
               className="mt-3 min-h-11 w-full text-[13px] text-muted-foreground"
               onClick={reset}
             >
-              다른 웹툰 찾기
+              {t("find.findOther")}
             </Button>
           </motion.div>
         ) : null}

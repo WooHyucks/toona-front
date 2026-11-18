@@ -20,6 +20,8 @@ import {
 import { PlatformBadge } from "@/features/webtoons/components/PlatformBadge";
 import { WebtoonCover } from "@/features/webtoons/components/WebtoonCover";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n/LocaleProvider";
+import { LocaleLink } from "@/components/i18n/LocaleLink";
 import type { RecommendationItem } from "@/types/api";
 
 const AUTO_MS = 4800;
@@ -76,15 +78,17 @@ function HeroSlideContent({
   weekendCopy: boolean;
   priority?: boolean;
 }) {
+  const t = useT();
   const router = useRouter();
   const reduceMotion = useReducedMotion();
   const webtoon = item.webtoon;
   const platform = normalizePlatform(String(webtoon.platform));
   const hasUrl = Boolean(webtoon.officialUrl);
   const canOpen = platform === "KAKAO" ? Boolean(webtoon.id) : hasUrl;
-  const ctaLabel = hasUrl || platform === "KAKAO"
-    ? "지금 보러가기"
-    : "링크를 준비 중이에요";
+  const ctaLabel =
+    hasUrl || platform === "KAKAO"
+      ? t("home.heroCta")
+      : t("common.preparingLink");
   const episode = getEpisodeLabel({
     status: webtoon.status,
     latestEpisodeNumber: webtoon.latestEpisodeNumber,
@@ -94,8 +98,8 @@ function HeroSlideContent({
     RECOMMENDATION_TYPE_LABEL[item.recommendationType] ??
     item.recommendationType;
   const headline = weekendCopy
-    ? "이번 주말 정주행 추천"
-    : `${sourceTitle}을 좋아했다면`;
+    ? t("home.heroEyebrow")
+    : t("home.heroLiked", { title: sourceTitle });
   const reason = item.recommendationReason?.trim();
 
   function onCta() {
@@ -445,9 +449,10 @@ export function HeroSlider({ hero }: { hero: HomeHeroView }) {
 }
 
 export function FallbackHero() {
+  const t = useT();
   return (
     <div className="pb-1 pt-3 md:pb-3 md:pt-1">
-      <Link
+      <LocaleLink
         href="/onboarding"
         className="relative block overflow-hidden rounded-[22px] bg-card px-6 py-10 ring-1 ring-white/[0.06] transition-colors hover:bg-elevated md:rounded-[28px] md:px-10 md:py-14"
       >
@@ -462,12 +467,12 @@ export function FallbackHero() {
           TOONA
         </p>
         <h2 className="relative mt-2 text-[24px] font-bold tracking-[-0.03em] text-foreground md:text-[30px]">
-          오늘은 어떤 작품을 볼까요?
+          {t("home.fallbackHero")}
         </h2>
         <p className="relative mt-2 max-w-md text-[14px] text-muted-foreground">
-          아래에서 인기·장르별 작품을 둘러보세요.
+          {t("home.fallbackDesc")}
         </p>
-      </Link>
+      </LocaleLink>
     </div>
   );
 }

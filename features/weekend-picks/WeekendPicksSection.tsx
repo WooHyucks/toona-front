@@ -25,6 +25,7 @@ import {
 import { isYoutubeShortsUrl, resolveYoutubeVideoId } from "@/lib/youtube";
 import { HORIZONTAL_RAIL_TOUCH_CLASS } from "@/lib/embla-rail";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n/LocaleProvider";
 import type { WeekendPickItem } from "@/types/api";
 import { WeekendPickCard } from "./WeekendPickCard";
 import { WeekendReviewSheet } from "./WeekendReviewSheet";
@@ -44,6 +45,7 @@ export function WeekendPicksSection({
   onAvailableChange,
   reopenKey = 0,
 }: Props) {
+  const t = useT();
   const reduceMotion = useReducedMotion();
   const [items, setItems] = useState<WeekendPickItem[]>([]);
   const [weekKey, setWeekKey] = useState("");
@@ -213,13 +215,13 @@ export function WeekendPicksSection({
           >
             <DialogHeader className="shrink-0 px-5 pb-4 text-center md:px-6 md:pb-3 md:pt-5 md:pr-12 md:text-left">
               <p className="text-[12px] font-medium text-primary">
-                이번 주말 투나 PICK
+                {t("weekend.eyebrow")}
               </p>
               <DialogTitle className="pt-1 text-[20px] leading-snug tracking-[-0.02em] text-white md:text-[22px] md:text-foreground">
-                이번 주말, 투나가 골라봤어요
+                {t("weekend.title")}
               </DialogTitle>
               <DialogDescription className="text-[13px] text-white/70 md:text-muted-foreground">
-                지금 시작하면 멈추기 힘든 작품들만 골랐어요.
+                {t("weekend.description")}
               </DialogDescription>
             </DialogHeader>
 
@@ -252,7 +254,7 @@ export function WeekendPicksSection({
                       <button
                         key={item.webtoon.id}
                         type="button"
-                        aria-label={`${index + 1}번째 작품`}
+                        aria-label={t("weekend.pickAria", { n: index + 1 })}
                         onClick={() => emblaApi?.scrollTo(index)}
                         className={cn(
                           "h-1.5 rounded-full transition-all",
@@ -283,7 +285,7 @@ export function WeekendPicksSection({
 
             <div className="shrink-0 px-5 pt-4 md:border-t md:border-border md:px-6 md:py-4">
               <p className="text-center text-[13px] font-medium text-white/70 md:text-muted-foreground">
-                취향이 아니라면?
+                {t("weekend.notTaste")}
               </p>
               <button
                 type="button"
@@ -294,11 +296,11 @@ export function WeekendPicksSection({
                 }}
                 className="mt-2 flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 text-[15px] font-semibold text-primary-foreground hover:bg-primary hover:text-primary-foreground md:mx-auto md:max-w-md"
               >
-                내 취향으로 추천받기
+                {t("weekend.personalize")}
                 <ArrowRight className="h-4 w-4" aria-hidden />
               </button>
               <p className="mt-2 text-center text-[12px] text-white/55 md:text-muted-foreground">
-                재밌게 본 웹툰 하나만 알려주면 돼요.
+                {t("weekend.personalizeHint")}
               </p>
             </div>
           </div>

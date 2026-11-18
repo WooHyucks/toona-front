@@ -30,6 +30,8 @@ import {
   trackWeekendReviewReadClick,
 } from "@/lib/analytics";
 import type { WeekendPickItem } from "@/types/api";
+import { useLocale, useT } from "@/lib/i18n/LocaleProvider";
+import { findOfficialCtaLabel } from "@/features/find/platform";
 import {
   getCachedOfficialUrl,
   resolvePickOfficialUrl,
@@ -51,6 +53,8 @@ export function WeekendReviewSheet({
   onClose,
   embedded = false,
 }: Props) {
+  const t = useT();
+  const { locale } = useLocale();
   const router = useRouter();
   const isMobile = useIsMobile();
   const [iframeReady, setIframeReady] = useState(false);
@@ -144,7 +148,7 @@ export function WeekendReviewSheet({
     : null;
   const ctaLabel = item
     ? normalizePlatform(item.webtoon.platform) === "KAKAO"
-      ? "카카오웹툰에서 보기"
+      ? findOfficialCtaLabel("KAKAO", locale)
       : getOpenWebtoonCtaLabel(item.webtoon.platform, {
           isMobile,
           officialUrl,
@@ -165,7 +169,7 @@ export function WeekendReviewSheet({
       {embedded ? (
         <button
           type="button"
-          aria-label="리뷰 닫기"
+          aria-label={t("weekend.closeReview")}
           className="absolute right-3 top-3 z-10 rounded-full p-2 text-muted-foreground"
           onClick={() => {
             if (!embedded) emitClose();
@@ -196,7 +200,7 @@ export function WeekendReviewSheet({
           <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black">
             {iframeReady && videoId && !embedFailed ? (
               <iframe
-                title={`${item.webtoon.title} 리뷰`}
+                title={t("weekend.reviewOf", { title: item.webtoon.title })}
                 src={youtubeEmbedUrl(videoId)}
                 className="absolute inset-0 h-full w-full"
                 allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -210,7 +214,7 @@ export function WeekendReviewSheet({
                 className="absolute inset-0"
                 onClick={loadIframe}
                 disabled={!videoId}
-                aria-label="리뷰 영상 재생"
+                aria-label={t("weekend.playReview")}
               >
                 {poster ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -238,7 +242,7 @@ export function WeekendReviewSheet({
               rel="noopener noreferrer"
               className="mt-3 block rounded-xl border border-border px-4 py-3 text-center text-[13px] font-semibold text-foreground"
             >
-              유튜브에서 리뷰 보기
+              {t("weekend.youtubeReview")}
             </a>
           ) : iframeReady && watchUrl ? (
             <a
@@ -247,7 +251,7 @@ export function WeekendReviewSheet({
               rel="noopener noreferrer"
               className="mt-2 inline-block text-[12px] text-muted-foreground"
             >
-              유튜브에서 리뷰 보기
+              {t("weekend.youtubeReview")}
             </a>
           ) : null}
 
@@ -296,7 +300,7 @@ export function WeekendReviewSheet({
           </a>
         ) : (
           <Button type="button" className="h-12 w-full" disabled>
-            링크를 준비 중이에요
+            {t("common.preparingLink")}
           </Button>
         )}
         <Button
@@ -308,7 +312,7 @@ export function WeekendReviewSheet({
             onClose();
           }}
         >
-          {embedded ? "작품 목록으로" : "닫기"}
+          {embedded ? t("weekend.backToList") : t("common.close")}
         </Button>
         </div>
       </div>
@@ -322,7 +326,9 @@ export function WeekendReviewSheet({
       <DrawerContent className="max-h-[92dvh]">
         <DrawerHeader className="sr-only">
           <DrawerTitle>{item.webtoon.title}</DrawerTitle>
-          <DrawerDescription>{item.webtoon.title} 리뷰 영상</DrawerDescription>
+          <DrawerDescription>
+            {t("weekend.reviewOf", { title: item.webtoon.title })}
+          </DrawerDescription>
         </DrawerHeader>
         {body}
       </DrawerContent>

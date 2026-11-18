@@ -66,3 +66,12 @@ export function hasRecommendationResults(
 ): boolean {
   return Boolean(pickBestRecommendation(data));
 }
+
+/** Ordered set for the result page: best first, then up to 2 alternatives (≤3). */
+export function pickRecommendationSet(
+  data: RecommendationsResponse | null | undefined
+): RecommendationItem[] {
+  const best = pickBestRecommendation(data);
+  if (!best) return [];
+  return [best, ...pickAlternativeRecommendations(data, best)];
+}

@@ -13,6 +13,7 @@ import {
 } from "@/lib/recentTasteSource";
 import { prepareTasteAnalysis } from "@/lib/taste-flow";
 import { Button } from "@/components/ui/button";
+import { useLocale, useT } from "@/lib/i18n/LocaleProvider";
 
 type RecentTasteResumeCardProps = {
   browseAnchorId?: string;
@@ -22,6 +23,8 @@ export function RecentTasteResumeCard({
   browseAnchorId = "home-browse",
 }: RecentTasteResumeCardProps) {
   const router = useRouter();
+  const t = useT();
+  const { hrefWithLang } = useLocale();
   const [recent, setRecent] = useState<RecentTasteSource | null>(null);
   const [mounted, setMounted] = useState(false);
 
@@ -50,12 +53,14 @@ export function RecentTasteResumeCard({
       source: recent.source,
     });
     router.push(
-      prepareTasteAnalysis(recent.webtoonId, recent.title, {
-        source: "returning",
-        origin: recent.source,
-        thumbnailUrl: recent.thumbnailUrl,
-        platform: recent.platform,
-      })
+      hrefWithLang(
+        prepareTasteAnalysis(recent.webtoonId, recent.title, {
+          source: "returning",
+          origin: recent.source,
+          thumbnailUrl: recent.thumbnailUrl,
+          platform: recent.platform,
+        })
+      )
     );
   }
 
@@ -70,7 +75,7 @@ export function RecentTasteResumeCard({
       node.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
-    router.push("/onboarding");
+    router.push(hrefWithLang("/onboarding"));
   }
 
   function clearRecent() {
@@ -80,11 +85,11 @@ export function RecentTasteResumeCard({
 
   return (
     <section
-      aria-label="최근 선택한 웹툰"
+      aria-label={t("home.recentTitle")}
       className="mt-4 rounded-2xl border border-border bg-card p-4"
     >
       <p className="text-[12px] font-medium text-muted-foreground">
-        최근 선택한 웹툰
+        {t("home.recentTitle")}
       </p>
       <div className="mt-3 flex gap-3">
         <div className="relative h-[88px] w-[64px] shrink-0 overflow-hidden rounded-xl bg-elevated">
@@ -103,14 +108,14 @@ export function RecentTasteResumeCard({
             {recent.title}
           </h2>
           <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
-            {recent.title}과 비슷한 웹툰을 계속 찾아볼까요?
+            {t("home.recentResumeHint", { title: recent.title })}
           </p>
         </div>
       </div>
 
       <div className="mt-4 flex flex-col gap-2 sm:flex-row">
         <Button type="button" className="min-h-11 flex-1" onClick={resume}>
-          추천 이어보기
+          {t("home.resumeRecs")}
         </Button>
         <Button
           type="button"
@@ -118,7 +123,7 @@ export function RecentTasteResumeCard({
           className="min-h-11 flex-1"
           onClick={pickAnother}
         >
-          다른 작품 고르기
+          {t("home.pickOther")}
         </Button>
       </div>
       <button
@@ -126,7 +131,7 @@ export function RecentTasteResumeCard({
         onClick={clearRecent}
         className="mt-2 text-[12px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
       >
-        최근 선택 지우기
+        {t("home.clearRecent")}
       </button>
     </section>
   );

@@ -16,8 +16,11 @@ import { setFavoriteWebtoon } from "@/lib/session";
 import { clearRecentTasteSource } from "@/lib/recentTasteSource";
 import { recommendationHref } from "@/lib/recommendations-path";
 import type { TasteAnalysisResponse } from "@/types/api";
+import { useLocale, useT } from "@/lib/i18n/LocaleProvider";
 
 export function AnalysisScreen() {
+  const t = useT();
+  const { hrefWithLang } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const reduceMotion = useReducedMotion();
@@ -41,7 +44,7 @@ export function AnalysisScreen() {
 
   const load = useCallback(async () => {
     if (!webtoonId) {
-      setError("작품을 선택해주세요.");
+      setError(t("analysis.pickWork"));
       setErrorCode("not_found");
       setLoading(false);
       return;
@@ -63,21 +66,21 @@ export function AnalysisScreen() {
       if (err instanceof ToonaApiError) {
         if (err.status === 404 || err.code === "not_found") {
           clearRecentTasteSource();
-          setError("최근 선택한 작품을 찾을 수 없어요.");
+          setError(t("analysis.notFound"));
           setErrorCode("not_found");
         } else if (err.code === "untagged") {
-          setError("이 작품은 아직 추천 준비 중이에요.");
+          setError(t("analysis.notReady"));
           setErrorCode("untagged");
         } else {
           setError(err.message);
           setErrorCode(err.code);
         }
       } else {
-        setError("취향을 분석하지 못했어요.");
+        setError(t("analysis.failed"));
         setErrorCode("analysis_failed");
       }
     }
-  }, [webtoonId]);
+  }, [webtoonId, t]);
 
   useEffect(() => {
     void load();
@@ -115,7 +118,7 @@ export function AnalysisScreen() {
   }, [data, reduceMotion]);
 
   const displayTitle =
-    data?.selectedWebtoon.title ?? titleParam ?? "선택한 작품";
+    data?.selectedWebtoon.title ?? titleParam ?? t("analysis.selectedWork");
   const coverSrc = data?.selectedWebtoon.thumbnailUrl ?? null;
   const axes = data?.analysis.axes ?? [];
   const showRadar = hasValidRadarAxes(axes);
@@ -132,8 +135,8 @@ export function AnalysisScreen() {
             : undefined
         }
         secondaryAction={{
-          label: "다른 작품 선택하기",
-          onClick: () => router.push("/onboarding"),
+          label: t("analysis.pickOther"),
+          onClick: () => router.push(hrefWithLang("/onboarding")),
         }}
       />
     );
@@ -151,13 +154,13 @@ export function AnalysisScreen() {
         </div>
         <div className="min-w-0 pt-0.5 sm:pt-1">
           <p className="text-[12px] text-muted-foreground sm:text-[13px]">
-            취향 분석
+            {t("analysis.title")}
           </p>
           <h1 className="mt-1 text-[20px] font-bold leading-snug tracking-[-0.02em] text-foreground sm:text-[22px]">
-            {displayTitle}을 좋아하셨군요
+            {t("analysis.liked", { title: displayTitle })}
           </h1>
           <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground sm:text-[13px]">
-            이 작품에서 이런 취향을 발견했어요
+            {t("analysis.discovered")}
           </p>
         </div>
       </div>
@@ -168,7 +171,7 @@ export function AnalysisScreen() {
           role="status"
         >
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-primary" />
-          <p className="text-[13px] text-muted-foreground">취향을 읽고 있어요</p>
+          <p className="text-[13px] text-muted-foreground">{t("analysis.reading")}</p>
         </div>
       ) : (
         <>
@@ -215,15 +218,17 @@ export function AnalysisScreen() {
               animate={{ opacity: 1, y: 0 }}
               onClick={() => {
                 router.push(
-                  recommendationHref(webtoonId!, {
-                    source: sourceParam,
-                    title: displayTitle,
-                  })
+                  hrefWithLang(
+                    recommendationHref(webtoonId!, {
+                      source: sourceParam,
+                      title: displayTitle,
+                    })
+                  )
                 );
               }}
               className="mt-auto flex min-h-12 w-full items-center justify-center rounded-2xl bg-primary text-[15px] font-semibold text-primary-foreground"
             >
-              이번 주말 볼 TOP3 보기
+              {t("analysis.cta")}
             </motion.button>
           ) : null}
         </>

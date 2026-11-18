@@ -19,7 +19,6 @@ import {
 import { SectionIcon, type SectionIconId } from "@/features/ui/SectionIcon";
 import {
   ALL_DAYS,
-  DAY_LABEL,
   getTodayDayOfWeek,
   type DayOfWeek,
   type Webtoon,
@@ -29,6 +28,7 @@ import { fetchWebtoons } from "@/lib/api/webtoons";
 import { fetchRankings } from "@/lib/api/rankings";
 import { mapListItemToWebtoon } from "@/lib/api/mappers";
 import { ToonaApiError } from "@/lib/api/client";
+import { useT } from "@/lib/i18n/LocaleProvider";
 
 type CategoryId =
   | "all"
@@ -41,32 +41,32 @@ type CategoryId =
 
 const PAGE_SIZE = 36;
 
-const CATEGORIES: Array<{
+const CATEGORY_DEFS: Array<{
   id: CategoryId;
   icon: SectionIconId;
-  label: string;
+  labelKey: string;
 }> = [
-  { id: "all", icon: "compass", label: "전체" },
-  { id: "fantasy", icon: "fantasy", label: "판타지·액션" },
-  { id: "romance", icon: "romance", label: "로맨스" },
-  { id: "drama", icon: "drama", label: "드라마" },
-  { id: "completed", icon: "completed", label: "완결" },
-  { id: "naver", icon: "naver", label: "네이버" },
-  { id: "kakao", icon: "kakao", label: "카카오" },
+  { id: "all", icon: "compass", labelKey: "discover.all" },
+  { id: "fantasy", icon: "fantasy", labelKey: "discover.fantasyAction" },
+  { id: "romance", icon: "romance", labelKey: "discover.romance" },
+  { id: "drama", icon: "drama", labelKey: "discover.drama" },
+  { id: "completed", icon: "completed", labelKey: "discover.completed" },
+  { id: "naver", icon: "naver", labelKey: "discover.naver" },
+  { id: "kakao", icon: "kakao", labelKey: "discover.kakao" },
 ];
 
-const PAGE_META: Record<
+const PAGE_META_KEYS: Record<
   string,
-  { title: string; description: string; category: CategoryId }
+  { titleKey: string; descriptionKey: string; category: CategoryId }
 > = {
   completed: {
-    title: "완결작",
-    description: "정주행하기 좋은 완결 웹툰을 모아봤어요",
+    titleKey: "discover.completedTitle",
+    descriptionKey: "discover.completedDesc",
     category: "completed",
   },
   platform: {
-    title: "플랫폼",
-    description: "네이버·카카오 플랫폼별로 작품을 살펴보세요",
+    titleKey: "discover.platformTitle",
+    descriptionKey: "discover.platformDesc",
     category: "naver",
   },
 };
@@ -86,11 +86,21 @@ function resolveCategory(param: string | null): CategoryId {
   if (param === "completed") return "completed";
   if (param === "platform") return "naver";
   if (param === "naver" || param === "kakao") return param;
-  if (param && CATEGORIES.some((c) => c.id === param)) {
+  if (param && CATEGORY_DEFS.some((c) => c.id === param)) {
     return param as CategoryId;
   }
   return "all";
 }
+
+const DAY_I18N_KEY: Record<DayOfWeek, string> = {
+  mon: "discover.days.mon",
+  tue: "discover.days.tue",
+  wed: "discover.days.wed",
+  thu: "discover.days.thu",
+  fri: "discover.days.fri",
+  sat: "discover.days.sat",
+  sun: "discover.days.sun",
+};
 
 function dedupeWebtoons(items: Webtoon[]): Webtoon[] {
   const seen = new Set<string>();
@@ -222,12 +232,13 @@ async function loadPage(
 type DayFilter = "all" | "today" | DayOfWeek;
 
 export function DiscoverScreen() {
+  const t = useT();
   const { openWebtoon } = useWebtoonSheet();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get("c");
-  const pageMeta = categoryParam ? PAGE_META[categoryParam] : null;
+  const pageMetaKeys = categoryParam ? PAGE_META_KEYS[categoryParam] : null;
 
   const [activeCategory, setActiveCategory] = useState<CategoryId>(() =>
     resolveCategory(categoryParam)
@@ -314,12 +325,12 @@ export function DiscoverScreen() {
         setErrorMessage(
           err instanceof ToonaApiError
             ? err.message
-            : "작품을 불러오지 못했어요."
+            : t("discover.loadFailed")
         );
         setStatus("error");
       }
     },
-    [applyEntry]
+    [applyEntry, t]
   );
 
   const loadMore = useCallback(async () => {
@@ -444,12 +455,12 @@ export function DiscoverScreen() {
 
   const visibleCategories = useMemo(() => {
     if (categoryParam === "platform") {
-      return CATEGORIES.filter((c) => c.id === "naver" || c.id === "kakao");
+      return CATEGORY_DEFS.filter((c) => c.id === "naver" || c.id === "kakao");
     }
     if (categoryParam === "completed") {
       return [];
     }
-    return CATEGORIES;
+    return CATEGORY_DEFS;
   }, [categoryParam]);
 
   const filtered = useMemo(() => {
@@ -464,11 +475,11 @@ export function DiscoverScreen() {
 
   const dayFilters: Array<{ id: DayFilter; label: string; highlight?: boolean }> =
     [
-      { id: "all", label: "전체" },
-      { id: "today", label: "오늘", highlight: true },
+      { id: "all", label: t("discover.all") },
+      { id: "today", label: t("discover.today"), highlight: true },
       ...ALL_DAYS.map((day) => ({
         id: day as DayFilter,
-        label: DAY_LABEL[day],
+        label: t(DAY_I18N_KEY[day]),
         highlight: day === today,
       })),
     ];
@@ -477,10 +488,15 @@ export function DiscoverScreen() {
     <div className="pb-10 md:pb-16">
       <DesktopContent>
         <DesktopPageHeader
-          title={pageMeta?.title ?? "발견"}
+          title={
+            pageMetaKeys
+              ? t(pageMetaKeys.titleKey)
+              : t("discover.discoverTitle")
+          }
           description={
-            pageMeta?.description ??
-            "장르·플랫폼·요일별로 작품을 탐색해보세요"
+            pageMetaKeys
+              ? t(pageMetaKeys.descriptionKey)
+              : t("discover.defaultDesc")
           }
         />
 
@@ -499,7 +515,7 @@ export function DiscoverScreen() {
                 )}
               >
                 <SectionIcon id={category.icon} className="h-3.5 w-3.5" />
-                {category.label}
+                {t(category.labelKey)}
               </button>
             ))}
           </div>
@@ -509,7 +525,7 @@ export function DiscoverScreen() {
           <div className="mb-6">
             <p className="mb-2.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground md:text-[12px]">
               <SectionIcon id="today" className="h-3.5 w-3.5 text-primary" />
-              요일별
+              {t("discover.byDay")}
             </p>
             <div className="flex flex-wrap gap-2">
               {dayFilters.map((day) => (
@@ -536,13 +552,15 @@ export function DiscoverScreen() {
 
         <p className="mb-4 text-[12px] text-muted-foreground md:text-[13px]">
           {status === "loading"
-            ? "불러오는 중…"
-            : `${filtered.length}개의 작품`}
-          {status !== "loading" && hasMore ? " · 스크롤하면 더 불러와요" : null}
+            ? t("discover.loading")
+            : t("discover.countWorks", { count: filtered.length })}
+          {status !== "loading" && hasMore ? t("discover.scrollMore") : null}
           {status !== "loading" && activeDay === "today"
-            ? ` · ${DAY_LABEL[today]}요일 연재`
+            ? t("discover.daySerial", { day: t(DAY_I18N_KEY[today]) })
             : status !== "loading" && activeDay !== "all"
-              ? ` · ${DAY_LABEL[activeDay as DayOfWeek]}요일 연재`
+              ? t("discover.daySerial", {
+                  day: t(DAY_I18N_KEY[activeDay as DayOfWeek]),
+                })
               : null}
         </p>
 
@@ -570,7 +588,7 @@ export function DiscoverScreen() {
               }}
               className="mt-4 min-h-11 rounded-xl bg-primary px-4 text-[13px] font-semibold text-primary-foreground"
             >
-              다시 시도
+              {t("common.retry")}
             </button>
           </div>
         ) : null}
@@ -578,10 +596,10 @@ export function DiscoverScreen() {
         {status === "empty" ? (
           <div className="rounded-2xl bg-card px-4 py-10 text-center">
             <p className="text-[14px] font-medium text-foreground">
-              이 조건에 맞는 작품이 없어요.
+              {t("discover.empty")}
             </p>
             <p className="mt-1 text-[13px] text-muted-foreground">
-              다른 장르나 플랫폼을 선택해보세요.
+              {t("discover.emptyHint")}
             </p>
           </div>
         ) : null}
@@ -608,18 +626,18 @@ export function DiscoverScreen() {
                 <div
                   className="flex items-center gap-2 text-[12px] text-muted-foreground"
                   role="status"
-                  aria-label="더 불러오는 중"
+                  aria-label={t("discover.loadingMore")}
                 >
                   <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  더 불러오는 중
+                  {t("discover.loadingMore")}
                 </div>
               ) : hasMore ? (
                 <span className="text-[11px] text-muted-foreground/60">
-                  아래로 스크롤
+                  {t("discover.scrollDown")}
                 </span>
               ) : filtered.length > 0 ? (
                 <span className="text-[11px] text-muted-foreground/60">
-                  모두 불러왔어요
+                  {t("discover.allLoaded")}
                 </span>
               ) : null}
             </div>

@@ -1,3 +1,7 @@
+"use client";
+
+import { useT } from "@/lib/i18n/LocaleProvider";
+
 type Props = {
   memories: string[];
   question?: string | null;
@@ -10,6 +14,8 @@ export function FindMemoryTrail({
   question,
   compact = false,
 }: Props) {
+  const t = useT();
+
   if (memories.length === 0 && !question) return null;
 
   if (compact) {
@@ -17,10 +23,12 @@ export function FindMemoryTrail({
     const summary =
       latest.length > 72 ? `${latest.slice(0, 72).trim()}…` : latest;
     return (
-      <section className="mb-5" aria-label="지금까지 기억한 내용">
+      <section className="mb-5" aria-label={t("find.memoryTrailAria")}>
         {summary ? (
           <p className="line-clamp-2 text-[13px] leading-relaxed text-muted-foreground">
-            <span className="font-medium text-foreground/80">내가 기억한 내용 · </span>
+            <span className="font-medium text-foreground/80">
+              {t("find.memoryTrailPrefix")}
+            </span>
             {summary}
           </p>
         ) : null}
@@ -29,11 +37,11 @@ export function FindMemoryTrail({
   }
 
   return (
-    <section className="mb-6 space-y-4" aria-label="지금까지 기억한 내용">
+    <section className="mb-6 space-y-4" aria-label={t("find.memoryTrailAria")}>
       {memories.length > 0 ? (
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            내가 기억한 내용
+            {t("find.memoryTrail")}
           </p>
           <div className="mt-2 space-y-2">
             {memories.map((memory, index) => (
@@ -50,7 +58,7 @@ export function FindMemoryTrail({
       {question ? (
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            TOONA 질문
+            {t("find.toonaQuestion")}
           </p>
           <p className="mt-2 text-[15px] font-semibold leading-snug tracking-[-0.02em] text-foreground">
             {question}

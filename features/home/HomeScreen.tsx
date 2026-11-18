@@ -13,30 +13,34 @@ import { WeekendPicksSection } from "@/features/weekend-picks/WeekendPicksSectio
 import { WeekendPicksOpenButton } from "@/features/weekend-picks/WeekendPicksOpenButton";
 import { ToonaLogo } from "@/components/brand/ToonaLogo";
 import { ToonaInstagramLink } from "@/components/brand/ToonaInstagramLink";
-import Link from "next/link";
 import { RotateCcw, Search } from "lucide-react";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { LocaleLink } from "@/components/i18n/LocaleLink";
+import { useLocale, useT } from "@/lib/i18n/LocaleProvider";
 
 function MobileHomeHeader() {
+  const t = useT();
   return (
     <header className="sticky top-0 z-30 -mx-4 mb-1 flex items-center justify-between bg-background/90 px-4 py-3 backdrop-blur-md md:hidden">
-      <Link href="/home" aria-label="Toona 홈">
+      <LocaleLink href="/home" aria-label={t("common.homeAria")}>
         <ToonaLogo size="sm" priority />
-      </Link>
+      </LocaleLink>
       <div className="flex items-center gap-1.5">
-        <Link
+        <LanguageSwitcher />
+        <LocaleLink
           href="/search"
-          aria-label="검색"
+          aria-label={t("home.search")}
           className="flex h-11 w-11 items-center justify-center rounded-xl bg-card text-muted-foreground"
         >
           <Search className="h-5 w-5" />
-        </Link>
-        <Link
+        </LocaleLink>
+        <LocaleLink
           href="/onboarding"
-          aria-label="취향 다시 설정"
+          aria-label={t("home.retaste")}
           className="flex h-11 w-11 items-center justify-center rounded-xl bg-card text-muted-foreground"
         >
           <RotateCcw className="h-5 w-5" />
-        </Link>
+        </LocaleLink>
         <ToonaInstagramLink className="flex h-11 w-11 rounded-xl bg-card" />
       </div>
     </header>
@@ -44,13 +48,14 @@ function MobileHomeHeader() {
 }
 
 function EmptyBrowse() {
+  const t = useT();
   return (
     <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
       <p className="text-[15px] font-medium text-foreground">
-        아직 보여줄 작품이 없어요.
+        {t("home.emptyTitle")}
       </p>
       <p className="mt-2 text-[13px] text-muted-foreground">
-        잠시 후 다시 확인해 주세요.
+        {t("home.emptyDesc")}
       </p>
     </div>
   );
@@ -58,6 +63,8 @@ function EmptyBrowse() {
 
 export function ToonaHome({ hero, rails }: HomeBundle) {
   const router = useRouter();
+  const t = useT();
+  const { hrefWithLang } = useLocale();
   const [picksAvailable, setPicksAvailable] = useState(false);
   const [picksReopenKey, setPicksReopenKey] = useState(0);
 
@@ -82,7 +89,7 @@ export function ToonaHome({ hero, rails }: HomeBundle) {
 
         <RecentTasteResumeCard browseAnchorId="home-browse" />
 
-        <Link
+        <LocaleLink
           href="/find"
           className="mt-4 flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5 transition-colors hover:bg-elevated"
         >
@@ -91,13 +98,13 @@ export function ToonaHome({ hero, rails }: HomeBundle) {
           </span>
           <span className="min-w-0 flex-1 text-left">
             <span className="block text-[14px] font-semibold text-foreground">
-              그 웹툰 뭐였지?
+              {t("home.findTitle")}
             </span>
             <span className="mt-0.5 block text-[12px] text-muted-foreground">
-              제목이 생각 안 나면 기억나는 내용만으로 찾아드려요
+              {t("home.findDesc")}
             </span>
           </span>
-        </Link>
+        </LocaleLink>
 
         {/* 웹툰 이상형 월드컵 — 일시 비노출
         <Link
@@ -139,20 +146,20 @@ export function ToonaHome({ hero, rails }: HomeBundle) {
         </div>
 
         <div className="mt-10 hidden md:block">
-          <Link
+          <LocaleLink
             href="/onboarding"
             className="inline-flex items-center gap-2 text-[13px] text-muted-foreground hover:text-foreground"
           >
             <RotateCcw className="h-3.5 w-3.5" />
-            취향 다시 설정
-          </Link>
+            {t("home.retaste")}
+          </LocaleLink>
         </div>
       </DesktopContent>
 
       <WeekendPicksSection
         reopenKey={picksReopenKey}
         onAvailableChange={setPicksAvailable}
-        onPersonalize={() => router.push("/onboarding")}
+        onPersonalize={() => router.push(hrefWithLang("/onboarding"))}
       />
     </div>
   );

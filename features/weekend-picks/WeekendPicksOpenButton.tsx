@@ -1,5 +1,7 @@
 "use client";
 
+import { useT } from "@/lib/i18n/LocaleProvider";
+
 type Props = {
   available: boolean;
   onOpen: () => void;
@@ -7,6 +9,7 @@ type Props = {
 };
 
 export function WeekendPicksOpenButton({ available, onOpen, className }: Props) {
+  const t = useT();
   if (!available) return null;
   return (
     <button
@@ -17,7 +20,7 @@ export function WeekendPicksOpenButton({ available, onOpen, className }: Props) 
         "mt-3 flex min-h-12 w-full items-center justify-center rounded-2xl bg-primary px-4 text-[15px] font-semibold text-primary-foreground"
       }
     >
-      🔥 이번 주말, 투나가 골라줘
+      {t("weekend.openButton")}
     </button>
   );
 }

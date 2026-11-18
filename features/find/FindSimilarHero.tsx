@@ -3,6 +3,7 @@
 import { ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { FindCandidate } from "@/types/api";
+import { useLocale, useT } from "@/lib/i18n/LocaleProvider";
 import { FindCover } from "./FindCover";
 import { findPlatformLabel } from "./platform";
 
@@ -12,7 +13,9 @@ type Props = {
 };
 
 export function FindSimilarHero({ item, onOfficialClick }: Props) {
-  const platform = findPlatformLabel(item.platform);
+  const t = useT();
+  const { locale } = useLocale();
+  const platform = findPlatformLabel(item.platform, locale);
   const reason = item.reason?.trim() ?? "";
   const officialUrl = item.officialUrl?.trim() || null;
 
@@ -43,10 +46,10 @@ export function FindSimilarHero({ item, onOfficialClick }: Props) {
             href={officialUrl}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label={`${item.title} 웹툰 보러가기, 새 탭`}
+            aria-label={`${item.title} ${t("find.openWebtoon")}`}
             onClick={onOfficialClick}
           >
-            웹툰 보러가기
+            {t("find.openWebtoon")}
             <ExternalLink className="h-4 w-4" aria-hidden />
           </a>
         </Button>

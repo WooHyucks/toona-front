@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import {
@@ -15,8 +14,50 @@ import {
 } from "lucide-react";
 import { ToonaLogo } from "@/components/brand/ToonaLogo";
 import { ToonaInstagramLink } from "@/components/brand/ToonaInstagramLink";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { LocaleLink } from "@/components/i18n/LocaleLink";
+import { useT } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
+const NAV_IDS = [
+  { id: "home", href: "/home", icon: Home, labelKey: "nav.home" },
+  { id: "discover", href: "/discover", icon: Compass, labelKey: "nav.discover" },
+  {
+    id: "completed",
+    href: "/discover?c=completed",
+    icon: BookOpenCheck,
+    labelKey: "nav.completedWorks",
+  },
+  {
+    id: "platform",
+    href: "/discover?c=platform",
+    icon: LayoutGrid,
+    labelKey: "nav.platform",
+  },
+  { id: "search", href: "/search", icon: Search, labelKey: "nav.search" },
+  { id: "find", href: "/find", icon: ScanSearch, labelKey: "nav.find" },
+  { id: "profile", href: "/profile", icon: User, labelKey: "nav.profile" },
+  {
+    id: "retaste",
+    href: "/onboarding",
+    icon: RotateCcw,
+    labelKey: "nav.retaste",
+  },
+] as const;
+
+const MOBILE_TAB_IDS = [
+  { id: "home", href: "/home", labelKey: "nav.home", icon: Home },
+  { id: "discover", href: "/discover", labelKey: "nav.discover", icon: Compass },
+  {
+    id: "completed",
+    href: "/discover?c=completed",
+    labelKey: "nav.completed",
+    icon: BookOpenCheck,
+  },
+  { id: "search", href: "/search", labelKey: "nav.search", icon: Search },
+] as const;
+
+/** @deprecated Prefer NAV_IDS + useT — kept for any external imports */
 export const NAV = [
   { id: "home", href: "/home", icon: Home, label: "홈" },
   { id: "discover", href: "/discover", icon: Compass, label: "발견" },
@@ -41,18 +82,6 @@ export const NAV = [
     icon: RotateCcw,
     label: "취향 다시 설정",
   },
-] as const;
-
-const MOBILE_TABS = [
-  { id: "home", href: "/home", label: "홈", icon: Home },
-  { id: "discover", href: "/discover", label: "발견", icon: Compass },
-  {
-    id: "completed",
-    href: "/discover?c=completed",
-    label: "완결",
-    icon: BookOpenCheck,
-  },
-  { id: "search", href: "/search", label: "검색", icon: Search },
 ] as const;
 
 function useDiscoverCategory() {
@@ -89,22 +118,25 @@ function isNavActive(
 function DesktopSidebarInner() {
   const pathname = usePathname();
   const discoverCategory = useDiscoverCategory();
+  const t = useT();
 
   return (
     <aside className="hidden h-full w-[220px] shrink-0 flex-col border-r border-border bg-background lg:w-[248px] md:flex">
-      <div className="mb-10 px-6 pt-8 lg:px-8">
-        <Link href="/home" className="inline-flex items-center" aria-label="Toona 홈">
+      <div className="mb-10 flex items-start justify-between gap-2 px-6 pt-8 lg:px-8">
+        <LocaleLink href="/home" className="inline-flex items-center" aria-label={t("common.homeAria")}>
           <ToonaLogo size="md" priority />
-        </Link>
+        </LocaleLink>
+        <LanguageSwitcher />
       </div>
 
-      <nav className="flex flex-1 flex-col gap-1 px-3 lg:px-4" aria-label="주요 메뉴">
-        {NAV.map((item) => {
-          const { id, href, icon: Icon, label } = item;
+      <nav className="flex flex-1 flex-col gap-1 px-3 lg:px-4" aria-label={t("nav.mainMenu")}>
+        {NAV_IDS.map((item) => {
+          const { id, href, icon: Icon, labelKey } = item;
           const active = isNavActive(id, pathname, discoverCategory);
+          const label = t(labelKey);
 
           return (
-            <Link
+            <LocaleLink
               key={id}
               href={href}
               prefetch
@@ -119,24 +151,24 @@ function DesktopSidebarInner() {
             >
               <Icon className="h-[17px] w-[17px] shrink-0 lg:h-[18px] lg:w-[18px]" />
               <span className="text-[13px] font-medium lg:text-[14px]">{label}</span>
-            </Link>
+            </LocaleLink>
           );
         })}
       </nav>
 
       <div className="space-y-4 px-6 pb-8 lg:px-8">
-        <Link
+        <LocaleLink
           href="/search"
           prefetch
           className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2.5 text-[12px] text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground lg:text-[13px]"
         >
           <Search className="h-3.5 w-3.5 shrink-0" />
-          웹툰 검색…
-        </Link>
+          {t("nav.searchHint")}
+        </LocaleLink>
         <p className="text-[11px] leading-relaxed text-muted-foreground/80 lg:text-[12px]">
-          네이버 · 카카오 웹툰을
+          {t("nav.taglineLine1")}
           <br />
-          한 곳에서 발견하세요
+          {t("nav.taglineLine2")}
         </p>
         <ToonaInstagramLink className="h-10 w-10 rounded-xl bg-card" />
       </div>
@@ -159,21 +191,23 @@ export function DesktopSidebar() {
 function MobileBottomNavInner() {
   const pathname = usePathname();
   const discoverCategory = useDiscoverCategory();
+  const t = useT();
 
   return (
     <nav
       className="shrink-0 border-t border-border bg-background md:hidden"
-      aria-label="하단 내비게이션"
+      aria-label={t("nav.bottomNav")}
     >
       <div
         className="flex justify-around gap-0.5 px-1 pt-1.5"
         style={{ paddingBottom: "max(6px, env(safe-area-inset-bottom))" }}
       >
-        {MOBILE_TABS.map(({ id, href, label, icon: Icon }) => {
+        {MOBILE_TAB_IDS.map(({ id, href, labelKey, icon: Icon }) => {
           const active = isNavActive(id, pathname, discoverCategory);
+          const label = t(labelKey);
 
           return (
-            <Link
+            <LocaleLink
               key={id}
               href={href}
               prefetch
@@ -204,7 +238,7 @@ function MobileBottomNavInner() {
               >
                 {label}
               </span>
-            </Link>
+            </LocaleLink>
           );
         })}
       </div>

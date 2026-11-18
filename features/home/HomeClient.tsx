@@ -7,8 +7,10 @@ import { ErrorState } from "@/components/common/ErrorState";
 import { getHomeBundle, type HomeBundle } from "@/lib/api/home";
 import { getFavoriteWebtoonId } from "@/lib/session";
 import { trackHomeView } from "@/lib/analytics";
+import { useT } from "@/lib/i18n/LocaleProvider";
 
 export function HomeClient() {
+  const t = useT();
   const [bundle, setBundle] = useState<HomeBundle | null>(null);
   const [status, setStatus] = useState<"loading" | "success" | "error">(
     "loading"
@@ -41,8 +43,8 @@ export function HomeClient() {
     return (
       <ErrorState
         fullPage
-        title="홈을 불러오지 못했어요"
-        description="네트워크나 백엔드 상태를 확인한 뒤 다시 시도해 주세요."
+        title={t("home.loadFailed")}
+        description={t("home.loadFailedDesc")}
         onRetry={() => setRetryKey((k) => k + 1)}
       />
     );

@@ -14,10 +14,12 @@ import { fetchWebtoonDetail } from "@/lib/api/webtoons";
 import { mapDetailToWebtoon } from "@/lib/api/mappers";
 import { getEpisodeLabel } from "@/lib/episode";
 import type { SearchWebtoonItem } from "@/types/api";
+import { useT } from "@/lib/i18n/LocaleProvider";
 
 const POPULAR = ["화산귀환", "참교육", "나 혼자만 레벨업", "로맨스", "무협"];
 
 export function SearchScreen() {
+  const t = useT();
   const { openWebtoon } = useWebtoonSheet();
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<SearchWebtoonItem[]>([]);
@@ -27,36 +29,39 @@ export function SearchScreen() {
   const [errorMessage, setErrorMessage] = useState("");
   const abortRef = useRef<AbortController | null>(null);
 
-  const runSearch = useCallback(async (value: string) => {
-    const q = value.trim();
-    if (!q) {
-      setItems([]);
-      setStatus("idle");
-      return;
-    }
+  const runSearch = useCallback(
+    async (value: string) => {
+      const q = value.trim();
+      if (!q) {
+        setItems([]);
+        setStatus("idle");
+        return;
+      }
 
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
-    setStatus("loading");
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+      setStatus("loading");
 
-    try {
-      const res = await searchWebtoons({
-        q,
-        limit: 20,
-        signal: controller.signal,
-      });
-      if (controller.signal.aborted) return;
-      setItems(res.items);
-      setStatus(res.items.length === 0 ? "empty" : "success");
-    } catch (err) {
-      if ((err as Error).name === "AbortError") return;
-      setErrorMessage(
-        err instanceof ToonaApiError ? err.message : "검색에 실패했어요."
-      );
-      setStatus("error");
-    }
-  }, []);
+      try {
+        const res = await searchWebtoons({
+          q,
+          limit: 20,
+          signal: controller.signal,
+        });
+        if (controller.signal.aborted) return;
+        setItems(res.items);
+        setStatus(res.items.length === 0 ? "empty" : "success");
+      } catch (err) {
+        if ((err as Error).name === "AbortError") return;
+        setErrorMessage(
+          err instanceof ToonaApiError ? err.message : t("search.failed")
+        );
+        setStatus("error");
+      }
+    },
+    [t]
+  );
 
   useEffect(() => {
     const timer = window.setTimeout(() => runSearch(query), 300);
@@ -93,8 +98,8 @@ export function SearchScreen() {
     <div className="pb-10 md:pb-16">
       <DesktopContent narrow={!query}>
         <DesktopPageHeader
-          title="검색"
-          description="제목, 작가로 작품을 찾아보세요"
+          title={t("search.title")}
+          description={t("search.hint")}
         />
 
         <form
@@ -107,20 +112,20 @@ export function SearchScreen() {
         >
           <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
           <label htmlFor="browse-search" className="sr-only">
-            웹툰 검색
+            {t("search.searchLabel")}
           </label>
           <input
             id="browse-search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="제목, 작가 검색"
+            placeholder={t("search.placeholder")}
             className="flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground md:text-[15px]"
           />
           {query ? (
             <button
               type="button"
               onClick={() => setQuery("")}
-              aria-label="검색어 지우기"
+              aria-label={t("common.clearSearch")}
             >
               <X className="h-4 w-4 text-muted-foreground" />
             </button>
@@ -131,7 +136,7 @@ export function SearchScreen() {
           <div>
             <p className="mb-4 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
               <Flame className="h-3.5 w-3.5 text-primary" />
-              인기 검색
+              {t("search.popular")}
             </p>
             <div className="flex flex-wrap gap-2">
               {POPULAR.map((title) => (
@@ -152,7 +157,7 @@ export function SearchScreen() {
           <div
             className="grid grid-cols-3 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
             role="status"
-            aria-label="검색 중"
+            aria-label={t("search.searching")}
           >
             {Array.from({ length: 9 }).map((_, i) => (
               <div key={i}>
@@ -171,14 +176,14 @@ export function SearchScreen() {
               onClick={() => runSearch(query)}
               className="mt-4 min-h-11 rounded-xl bg-primary px-4 text-[13px] font-semibold text-primary-foreground"
             >
-              다시 시도
+              {t("common.retry")}
             </button>
           </div>
         ) : null}
 
         {status === "empty" ? (
           <p className="py-10 text-center text-[14px] text-muted-foreground">
-            검색 결과가 없어요. 다른 표현으로 찾아보세요.
+            {t("search.emptyHint")}
           </p>
         ) : null}
 
@@ -203,22 +208,22 @@ export function SearchScreen() {
                     title={item.title}
                     platform={toUiPlatform(item.platform)}
                     priority={index < 6}
-                    seed={item.id}
                   />
-                  <p className="mt-2 line-clamp-2 min-h-[2.4em] text-[12px] font-semibold leading-tight text-foreground">
+                  <p className="mt-2 line-clamp-2 text-[13px] font-medium leading-snug text-foreground">
                     {item.title}
                   </p>
-                  <div className="mt-1 flex min-w-0 items-center gap-1.5">
-                    <PlatformBadge
-                      platform={toUiPlatform(item.platform)}
-                      size="xs"
-                      label="desktop"
-                    />
-                    <span className="min-w-0 flex-1 truncate text-[10px] text-muted-foreground">
-                      {episode ??
-                        (st ? STATUS_LABELS[st] : item.author) ??
-                        ""}
-                    </span>
+                  <div className="mt-1 flex flex-wrap items-center gap-1">
+                    <PlatformBadge platform={toUiPlatform(item.platform)} size="xs" />
+                    {st ? (
+                      <span className="text-[11px] text-muted-foreground">
+                        {STATUS_LABELS[st] ?? st}
+                      </span>
+                    ) : null}
+                    {episode ? (
+                      <span className="text-[11px] text-muted-foreground">
+                        {episode}
+                      </span>
+                    ) : null}
                   </div>
                 </button>
               );

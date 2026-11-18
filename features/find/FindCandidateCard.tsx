@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import type { FindCandidate } from "@/types/api";
+import { useLocale, useT } from "@/lib/i18n/LocaleProvider";
 import { FindCover } from "./FindCover";
 import { findPlatformLabel } from "./platform";
 
@@ -20,7 +21,9 @@ export function FindCandidateCard({
   onConfirm,
   onReject,
 }: Props) {
-  const platform = findPlatformLabel(candidate.platform);
+  const t = useT();
+  const { locale } = useLocale();
+  const platform = findPlatformLabel(candidate.platform, locale);
   const reason = candidate.reason?.trim() ?? "";
 
   return (
@@ -50,20 +53,20 @@ export function FindCandidateCard({
             type="button"
             className="min-h-11 w-full text-[14px] font-semibold"
             disabled={disabled}
-            aria-label={`${candidate.title} 맞아요`}
+            aria-label={`${candidate.title} ${t("find.confirm")}`}
             onClick={() => onConfirm(candidate.id)}
           >
-            이거 맞아요
+            {t("find.confirm")}
           </Button>
           <Button
             type="button"
             variant="ghost"
             className="min-h-10 w-full text-[13px] font-medium text-muted-foreground"
             disabled={disabled}
-            aria-label={`${candidate.title} 아니에요`}
+            aria-label={`${candidate.title} ${t("find.reject")}`}
             onClick={() => onReject(candidate.id)}
           >
-            아니에요
+            {t("find.reject")}
           </Button>
         </div>
       </div>
